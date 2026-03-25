@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "LinkedIn Job Filter",
+  "version": "1.0",
+  "description": "Hides specific jobs on LinkedIn job search page based on keywords.",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.linkedin.com/jobs/*",
+        "*://linkedin.com/jobs/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}
