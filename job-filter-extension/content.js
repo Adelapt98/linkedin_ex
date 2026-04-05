@@ -110,49 +110,107 @@ const countriesToRemove = [
     "Spain", "Madrid", "Barcelona", "Valencia", "Seville", "Zaragoza", "Malaga", "Murcia", "Palma", "Catalonia", "Andalusia", "Galicia", "Basque Country", "Bilbao"
 ];
 
+let totalJobsCounter = 0;
+let hiddenJobsCounter = 0;
+
+function updateBadge() {
+    let badge = document.getElementById('job-filter-badge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'job-filter-badge';
+        badge.style.position = 'fixed';
+        // Placed below the LinkedIn top navbar to ensure it is visible
+        badge.style.top = '70px';
+        badge.style.right = '20px';
+        badge.style.backgroundColor = '#0a66c2';
+        badge.style.color = 'white';
+        badge.style.padding = '10px 15px';
+        badge.style.borderRadius = '8px';
+        badge.style.fontWeight = 'bold';
+        badge.style.zIndex = '9999';
+        badge.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+        badge.style.fontFamily = 'System-ui, -apple-system, sans-serif';
+        badge.style.fontSize = '14px';
+        document.body.appendChild(badge);
+    }
+    badge.innerText = `Jobs loaded: ${totalJobsCounter} | Hidden: ${hiddenJobsCounter} | Visible: ${totalJobsCounter - hiddenJobsCounter}`;
+}
+
+// Pre-calculate lowercased countries so we do it exactly once
+const countriesLower = countriesToRemove.map(c => c.toLowerCase());
+
 function hideJobs() {
-    const jobItems = document.querySelectorAll("div.scaffold-layout__list > div > ul > li");
+    const jobItems = document.querySelectorAll("li.scaffold-layout__list-item");
+
+    // Update total counter based on currently loaded elements
+    totalJobsCounter = jobItems.length;
+    let currentHidden = 0;
 
     jobItems.forEach(item => {
-        // Skip if we already processed and hid this item to improve performance
-        if (item.dataset.jobHidden === "true") return;
-
-        let shouldHide = false;
-
-        // Convert the text content to lowercase for case-insensitive matching, if needed,
-        // however the user exactly specified the list with specific casing.
-        const itemText = item.textContent;
-
-        countriesToRemove.forEach(country => {
-            if (itemText.includes(country)) {
-                shouldHide = true;
-            }
-        });
+        // ALWAYS evaluate the job text because LinkedIn's infinite scrolling 
+        // recycles list items and constantly replaces their text. 
+        const itemText = item.textContent.toLowerCase();
+        const shouldHide = countriesLower.some(country => itemText.includes(country));
 
         if (shouldHide) {
-            item.style.display = 'none';
-            // Mark the item so we don't process it again
+            // Force display: none to override any native LinkedIn styles
+            item.style.setProperty('display', 'none', 'important');
             item.dataset.jobHidden = "true";
+            currentHidden++;
+        } else {
+            // Clear our style in case LinkedIn recycled a previously hidden element for a good job
+            item.style.removeProperty('display');
+            item.dataset.jobHidden = "false";
         }
     });
+
+    hiddenJobsCounter = currentHidden;
+    updateBadge(); // Refresh UI
 }
 
 // Initial run
 hideJobs();
 
+let debounceTimer;
+
 // Setup MutationObserver to watch for newly loaded jobs as the user scrolls
 const observer = new MutationObserver((mutations) => {
     let newJobsAdded = false;
     for (const mutation of mutations) {
-        // If nodes were added, it might be new jobs loading in
-        if (mutation.addedNodes.length > 0) {
+        // Ignore mutations caused by our own badge
+        if (mutation.target.id === 'job-filter-badge' ||
+            (mutation.target.parentElement && mutation.target.parentElement.id === 'job-filter-badge')) {
+            continue;
+        }
+
+        // Check if any actual element was added (not just text nodes)
+        let hasElementAdded = false;
+        for (const node of mutation.addedNodes) {
+            if (node.nodeType === 1 && node.id !== 'job-filter-badge') { // Node.ELEMENT_NODE is 1
+                hasElementAdded = true;
+                break;
+            }
+        }
+
+        if (hasElementAdded) {
             newJobsAdded = true;
             break;
         }
     }
 
     if (newJobsAdded) {
-        hideJobs();
+        // Clear previous timer and set a new one to prevent running too many times
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            // Temporarily disconnect to avoid our own DOM changes triggering the observer
+            observer.disconnect();
+            hideJobs();
+            // Reconnect the observer
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        }, 500);
     }
 });
 
