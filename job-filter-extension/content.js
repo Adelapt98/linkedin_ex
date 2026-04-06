@@ -169,6 +169,70 @@ function updateBadge() {
 // Pre-calculate lowercased countries so we do it exactly once
 const countriesLower = countriesToRemove.map(c => c.toLowerCase());
 
+/**
+ * Parses the LinkedIn primary-description container to extract:
+ * - location  (e.g. "Utrecht, Utrecht, Netherlands (Hybrid)" or "Germany")
+ * - timeAgo   (e.g. "3 hours ago" | "Reposted 1 week ago")
+ *
+ * LinkedIn structure inside the container (company name is rendered separately):
+ *   [location] · [time ago] · [engagement info] [p>optional misc</p>]
+ * So the FIRST non-time, non-junk segment is always the location.
+ */
+function extractJobInfo() {
+    const container =
+        document.querySelector('.job-details-jobs-unified-top-card__primary-description-container') ||
+        document.querySelector('.job-details-jobs-unified-top-card__primary-description') ||
+        document.querySelector('.jobs-unified-top-card__subtitle');
+
+    let location = 'N/A';
+    let timeAgo  = null;
+
+    if (container) {
+        const raw = container.textContent.replace(/\s+/g, ' ').trim();
+        // Segments are separated by middle-dot ·
+        const parts = raw.split(/\s*\u00b7\s*/).map(s => s.trim()).filter(Boolean);
+
+        const timePattern = /^(reposted\s+)?(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago$/i;
+
+        // Expanded junk filter: applicant counts, engagement, promoted notices, misc LinkedIn phrases
+        const junkPattern = /applicants?|people clicked|promoted|responses\s+managed|off linkedin|\d+\s+skills?\s+match|actively reviewing|easy apply|be (an )?early|hiring team|alumni/i;
+
+        // Pick out time-ago string
+        timeAgo = parts.find(p => timePattern.test(p)) || null;
+
+        // Keep only segments that are not time-ago and not junk
+        const rest = parts.filter(p => !timePattern.test(p) && !junkPattern.test(p));
+
+        // In LinkedIn's job-detail pane, company is shown in its own div above this container,
+        // so the FIRST remaining segment is always the location
+        if (rest.length > 0) {
+            location = rest[0];
+        }
+    }
+    return { location, timeAgo };
+}
+
+
+/**
+ * Converts a time-ago string (e.g. "3 hours ago") to an approximate
+ * posted/reposted Unix timestamp (ms). Calculation is done relative to
+ * Date.now() at the time of calling, so the result stays accurate even
+ * when the dashboard is opened later.
+ */
+function approxPostedTs(timeAgoStr) {
+    if (!timeAgoStr) return null;
+    const lower = timeAgoStr.toLowerCase();
+    const match = lower.match(/(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago/);
+    if (!match) return null;
+    const amount = parseInt(match[1]);
+    const unit   = match[2];
+    const msMap  = {
+        second: 1000, minute: 60000, hour: 3600000,
+        day: 86400000, week: 604800000, month: 2592000000, year: 31536000000
+    };
+    return Date.now() - amount * msMap[unit];
+}
+
 function hideJobs() {
     const jobItems = document.querySelectorAll("li.scaffold-layout__list-item");
 
@@ -252,12 +316,21 @@ function saveCurrentJob() {
         const emailsMatches = description.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi);
         const email = emailsMatches ? [...new Set(emailsMatches)].join(', ') : 'N/A';
 
+        // Extract job location + posting time-ago via shared helper
+        const jobInfo = extractJobInfo();
+        const location     = jobInfo.location;
+        const postedTs     = approxPostedTs(jobInfo.timeAgo);
+        const postedLabel  = jobInfo.timeAgo && /^reposted/i.test(jobInfo.timeAgo) ? 'Reposted' : 'Posted';
+
         const rawLink = link.split('?')[0]; // simple link
 
         const jobObj = {
             id: Date.now(),
             title: title,
             link: rawLink,
+            location: location,
+            postedTs: postedTs,
+            postedLabel: postedLabel,
             description: description.replace(/\r?\n|\r/g, ' ').replace(/"/g, '""'), // safe for csv
             email: email,
             recruiter: recruiter,
@@ -501,6 +574,14 @@ function analyzeJobDescription() {
     const jobId = matchId ? matchId[1] : null;
 
     if (jobId) {
+        // Extract title, link, location, and posting time from current page
+        const viewedTitleElem = document.querySelector('.job-details-jobs-unified-top-card__job-title') || document.querySelector('.jobs-unified-top-card__job-title');
+        const viewedTitle = viewedTitleElem ? viewedTitleElem.textContent.replace('📥 Save Job', '').replace('✅ Saved!', '').replace(/\s+/g, ' ').trim() : 'Unknown Title';
+        const viewedInfo     = extractJobInfo();
+        const viewedLocation = viewedInfo.location;
+        const viewedPostedTs    = approxPostedTs(viewedInfo.timeAgo);
+        const viewedPostedLabel = viewedInfo.timeAgo && /^reposted/i.test(viewedInfo.timeAgo) ? 'Reposted' : 'Posted';
+
         chrome.storage.local.get(['jobLanguageCache'], (result) => {
             const cache = result.jobLanguageCache || {};
 
@@ -508,6 +589,11 @@ function analyzeJobDescription() {
             cache[jobId] = {
                 isEnglish: isEnglish,
                 reqLang: foundMandatoryLanguage,
+                title: viewedTitle,
+                link: currentLink,
+                location: viewedLocation,
+                postedTs: viewedPostedTs,
+                postedLabel: viewedPostedLabel,
                 ts: Date.now()
             };
 

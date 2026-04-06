@@ -1,29 +1,43 @@
 document.addEventListener('DOMContentLoaded', function () {
-    let allJobs = [];
+
+    // ── State ──────────────────────────────────────────────────────────
     let langCache = {};
-    let sortCol = 'dateSaved';
-    let sortDir = -1; // -1 = descending (newest first)
+    let savedJobIds = new Set();
 
-    const tbody = document.getElementById('jobs-tbody');
-    const emptyState = document.getElementById('empty-state');
-    const totalBadge = document.getElementById('total-badge');
-    const rowCount = document.getElementById('row-count');
+    let sortCol = 'ts';
+    let sortDir = -1; // newest first
+
+    // ── DOM refs ───────────────────────────────────────────────────────
+    const totalBadge  = document.getElementById('total-badge');
+    const tbody       = document.getElementById('jobs-tbody');
+    const emptyState  = document.getElementById('empty-state');
+    const rowCount    = document.getElementById('row-count');
     const searchInput = document.getElementById('search-input');
-    const langFilter = document.getElementById('lang-filter');
+    const langFilter  = document.getElementById('lang-filter');
+    const savedFilter = document.getElementById('saved-filter');
 
-    // Load saved jobs + language cache together
+    // ── Load data ──────────────────────────────────────────────────────
     chrome.storage.local.get({ saved_jobs: [], jobLanguageCache: {} }, function (result) {
-        allJobs = result.saved_jobs || [];
         langCache = result.jobLanguageCache || {};
-        totalBadge.textContent = allJobs.length + (allJobs.length === 1 ? ' job' : ' jobs');
+
+        // Build set of job IDs that are in the saved list
+        savedJobIds = new Set();
+        (result.saved_jobs || []).forEach(job => {
+            const m = job.link && (job.link.match(/\/jobs\/view\/(\d+)/) || job.link.match(/currentJobId=(\d+)/));
+            if (m) savedJobIds.add(m[1]);
+        });
+
+        const total = Object.keys(langCache).length;
+        totalBadge.textContent = total + (total === 1 ? ' viewed' : ' viewed');
         render();
     });
 
-    // Search + filter listeners
-    searchInput.addEventListener('input', render);
-    langFilter.addEventListener('change', render);
+    // ── Filter / search listeners ──────────────────────────────────────
+    searchInput.addEventListener('input',  render);
+    langFilter.addEventListener('change',  render);
+    savedFilter.addEventListener('change', render);
 
-    // Column sort listeners
+    // ── Column sort ────────────────────────────────────────────────────
     document.querySelectorAll('th[data-col]').forEach(th => {
         th.addEventListener('click', function () {
             const col = this.dataset.col;
@@ -33,187 +47,146 @@ document.addEventListener('DOMContentLoaded', function () {
                 sortCol = col;
                 sortDir = 1;
             }
-            document.querySelectorAll('th[data-col]').forEach(t => t.classList.remove('sorted'));
+            document.querySelectorAll('th[data-col]').forEach(t => {
+                t.classList.remove('sorted');
+                t.querySelector('.sort-arrow').textContent = '↕';
+            });
             this.classList.add('sorted');
             this.querySelector('.sort-arrow').textContent = sortDir === 1 ? '↑' : '↓';
             render();
         });
     });
 
-    function getLangData(job) {
-        // Try to extract job ID from the link
-        const match = job.link && (job.link.match(/\/jobs\/view\/(\d+)/) || job.link.match(/currentJobId=(\d+)/));
-        const jobId = match ? match[1] : null;
-        if (jobId && langCache[jobId]) {
-            return langCache[jobId];
-        }
-        return null;
-    }
-
-    function filterJobs() {
-        const query = searchInput.value.toLowerCase().trim();
-        const langVal = langFilter.value;
-
-        return allJobs.filter(job => {
-            // Text search
-            const haystack = [job.title, job.recruiter, job.email, job.link].join(' ').toLowerCase();
-            if (query && !haystack.includes(query)) return false;
-
-            // Language filter
-            if (langVal !== 'all') {
-                const ld = getLangData(job);
-                if (langVal === 'unknown' && ld !== null) return false;
-                if (langVal === 'unknown' && ld === null) return true;
-                if (!ld) return false;
-                if (langVal === 'en' && !ld.isEnglish) return false;
-                if (langVal === 'non-en' && ld.isEnglish) return false;
-                if (langVal === 'req' && !ld.reqLang) return false;
-            }
-
-            return true;
-        });
-    }
-
-    function sortJobs(jobs) {
-        return [...jobs].sort((a, b) => {
-            let av = a[sortCol] || '';
-            let bv = b[sortCol] || '';
-
-            if (sortCol === 'lang') {
-                const ad = getLangData(a);
-                const bd = getLangData(b);
-                av = ad ? (ad.isEnglish ? 'en' : 'non') : 'z';
-                bv = bd ? (bd.isEnglish ? 'en' : 'non') : 'z';
-            }
-
-            if (av < bv) return -1 * sortDir;
-            if (av > bv) return 1 * sortDir;
-            return 0;
-        });
-    }
-
-    function formatDate(iso) {
-        if (!iso) return '—';
+    // ── Helpers ────────────────────────────────────────────────────────
+    function formatDateTime(isoOrMs) {
+        if (!isoOrMs) return '—';
         try {
-            const d = new Date(iso);
-            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        } catch (e) { return iso; }
+            const d = new Date(isoOrMs);
+            const day   = String(d.getDate()).padStart(2, '0');
+            const month = d.toLocaleString('en-GB', { month: 'short' });
+            const year  = d.getFullYear();
+            const hh    = String(d.getHours()).padStart(2, '0');
+            const mm    = String(d.getMinutes()).padStart(2, '0');
+            return `${day} ${month} ${year} - ${hh}:${mm}`;
+        } catch (e) { return String(isoOrMs); }
     }
 
-    function buildLangCell(ld) {
-        if (!ld) return '<span class="lang-pill lang-unknown">Unknown</span>';
-        let html = ld.isEnglish
+    function formatPostedDate(postedTs, postedLabel) {
+        if (!postedTs) return '—';
+        return `${formatDateTime(postedTs)} (${postedLabel || 'Posted'})`;
+    }
+
+    function buildLangCell(data) {
+        if (!data) return '<span class="lang-pill lang-unknown">Unknown</span>';
+        let html = data.isEnglish
             ? '<span class="lang-pill lang-en">[EN]</span>'
             : '<span class="lang-pill lang-non">[Non-EN]</span>';
-        if (ld.reqLang) {
-            html += '<br><span class="lang-pill lang-req">[Req. Lang]</span>';
-        }
+        if (data.reqLang) html += ' <span class="lang-pill lang-req">[Req. Lang]</span>';
         return html;
     }
 
-    function deleteJob(index, filteredId) {
-        if (!confirm('Remove this job from your saved list?')) return;
-        // filteredId is the original index in allJobs
-        allJobs.splice(filteredId, 1);
-        chrome.storage.local.set({ saved_jobs: allJobs }, function () {
-            totalBadge.textContent = allJobs.length + (allJobs.length === 1 ? ' job' : ' jobs');
-            render();
-        });
+    function buildSavedBadge(isSaved) {
+        return isSaved
+            ? '<span style="background:#e8f5e9;color:#2e7d32;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;">✅ Saved</span>'
+            : '<span style="background:#f5f5f5;color:#888;padding:3px 8px;border-radius:4px;font-size:11px;">—</span>';
     }
 
+    // ── Filter ─────────────────────────────────────────────────────────
+    function getFiltered() {
+        const q  = searchInput.value.toLowerCase().trim();
+        const lv = langFilter.value;
+        const sv = savedFilter.value;
+
+        return Object.entries(langCache)
+            .filter(([id, data]) => {
+                const hay = [data.title, data.location].join(' ').toLowerCase();
+                if (q && !hay.includes(q)) return false;
+                if (lv === 'en'     && !data.isEnglish) return false;
+                if (lv === 'non-en' &&  data.isEnglish) return false;
+                if (lv === 'req'    && !data.reqLang)   return false;
+                if (sv === 'saved'     && !savedJobIds.has(id)) return false;
+                if (sv === 'not-saved' &&  savedJobIds.has(id)) return false;
+                return true;
+            })
+            .map(([id, data]) => ({ id, ...data }));
+    }
+
+    // ── Render ─────────────────────────────────────────────────────────
     function render() {
-        const filtered = filterJobs();
-        const sorted = sortJobs(filtered);
+        const filtered = getFiltered();
 
-        rowCount.textContent = `Showing ${sorted.length} of ${allJobs.length} saved jobs`;
+        // Sort
+        const sorted = [...filtered].sort((a, b) => {
+            let av = sortCol === 'lang' ? (a.isEnglish ? 'en' : 'non') : (a[sortCol] || '');
+            let bv = sortCol === 'lang' ? (b.isEnglish ? 'en' : 'non') : (b[sortCol] || '');
+            if (av < bv) return -1 * sortDir;
+            if (av > bv) return  1 * sortDir;
+            return 0;
+        });
 
-        if (allJobs.length === 0) {
+        const total = Object.keys(langCache).length;
+        rowCount.textContent = `Showing ${sorted.length} of ${total} viewed jobs`;
+        tbody.innerHTML = '';
+
+        if (total === 0) {
             document.getElementById('jobs-table').style.display = 'none';
             emptyState.style.display = 'block';
             rowCount.textContent = '';
             return;
         }
-
         document.getElementById('jobs-table').style.display = '';
         emptyState.style.display = 'none';
 
-        tbody.innerHTML = '';
-
-        sorted.forEach(function (job) {
-            const originalIndex = allJobs.indexOf(job);
-            const ld = getLangData(job);
-
+        sorted.forEach(function (data) {
+            const isSaved = savedJobIds.has(data.id);
             const tr = document.createElement('tr');
 
             // Title
             const tdTitle = document.createElement('td');
-            tdTitle.innerHTML = job.link
-                ? `<a class="job-title-link" href="${job.link}" target="_blank" title="${job.title || ''}">${job.title || 'Untitled'}</a>`
-                : `<span class="job-title-link" title="${job.title || ''}">${job.title || 'Untitled'}</span>`;
+            tdTitle.innerHTML = data.link
+                ? `<a class="job-title-link" href="${data.link}" target="_blank" title="${data.title || ''}">${data.title || 'Job #' + data.id}</a>`
+                : `<span class="job-title-link">${data.title || 'Job #' + data.id}</span>`;
             tr.appendChild(tdTitle);
 
-            // Recruiter
-            const tdRecruiter = document.createElement('td');
-            if (job.recruiterLink && job.recruiterLink !== 'N/A') {
-                tdRecruiter.innerHTML = `<a class="recruiter-link" href="${job.recruiterLink}" target="_blank"><span class="recruiter-name" title="${job.recruiter || ''}">${job.recruiter || 'N/A'}</span> ↗</a>`;
-            } else {
-                tdRecruiter.innerHTML = `<span class="recruiter-name" title="${job.recruiter || ''}">${job.recruiter || 'N/A'}</span>`;
-            }
-            tr.appendChild(tdRecruiter);
+            // Location
+            const tdLoc = document.createElement('td');
+            tdLoc.innerHTML = `<span class="location-cell" title="${data.location || ''}">${data.location || '—'}</span>`;
+            tr.appendChild(tdLoc);
 
-            // Email
-            const tdEmail = document.createElement('td');
-            if (job.email && job.email !== 'N/A') {
-                tdEmail.innerHTML = `<a class="recruiter-link email-cell" href="mailto:${job.email}" title="${job.email}">${job.email}</a>`;
-            } else {
-                tdEmail.innerHTML = `<span class="email-cell">—</span>`;
-            }
-            tr.appendChild(tdEmail);
+            // Date Viewed
+            const tdViewed = document.createElement('td');
+            tdViewed.className = 'date-cell';
+            tdViewed.textContent = formatDateTime(data.ts);
+            tr.appendChild(tdViewed);
 
-            // Date
-            const tdDate = document.createElement('td');
-            tdDate.className = 'date-cell';
-            tdDate.textContent = formatDate(job.dateSaved);
-            tr.appendChild(tdDate);
+            // Posted Date
+            const tdPosted = document.createElement('td');
+            tdPosted.className = 'date-cell';
+            tdPosted.textContent = formatPostedDate(data.postedTs, data.postedLabel);
+            tr.appendChild(tdPosted);
 
             // Language
             const tdLang = document.createElement('td');
-            tdLang.innerHTML = buildLangCell(ld);
+            tdLang.innerHTML = buildLangCell(data);
             tr.appendChild(tdLang);
 
+            // Saved?
+            const tdSaved = document.createElement('td');
+            tdSaved.innerHTML = buildSavedBadge(isSaved);
+            tr.appendChild(tdSaved);
+
             // Actions
-            const tdActions = document.createElement('td');
-            tdActions.className = 'actions-cell';
-
-            // View Job
-            if (job.link) {
-                const btnJob = document.createElement('a');
-                btnJob.href = job.link;
-                btnJob.target = '_blank';
-                btnJob.className = 'action-btn btn-job';
-                btnJob.innerHTML = '🔗 View Job';
-                tdActions.appendChild(btnJob);
+            const tdAct = document.createElement('td');
+            tdAct.className = 'actions-cell';
+            if (data.link) {
+                const a = document.createElement('a');
+                a.href = data.link; a.target = '_blank';
+                a.className = 'action-btn btn-job';
+                a.innerHTML = '🔗 View Job';
+                tdAct.appendChild(a);
             }
+            tr.appendChild(tdAct);
 
-            // View HR
-            if (job.recruiterLink && job.recruiterLink !== 'N/A') {
-                const btnHR = document.createElement('a');
-                btnHR.href = job.recruiterLink;
-                btnHR.target = '_blank';
-                btnHR.className = 'action-btn btn-hr';
-                btnHR.innerHTML = '👤 View HR';
-                tdActions.appendChild(btnHR);
-            }
-
-            // Delete
-            const btnDel = document.createElement('button');
-            btnDel.className = 'action-btn btn-del';
-            btnDel.innerHTML = '🗑️';
-            btnDel.title = 'Remove from saved jobs';
-            btnDel.addEventListener('click', function () { deleteJob(0, originalIndex); });
-            tdActions.appendChild(btnDel);
-
-            tr.appendChild(tdActions);
             tbody.appendChild(tr);
         });
     }
