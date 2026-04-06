@@ -118,4 +118,32 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // ── Hide Viewed / Applied toggles ──
+    const hideViewedToggle  = document.getElementById('hide-viewed-toggle');
+    const hideAppliedToggle = document.getElementById('hide-applied-toggle');
+
+    // Load saved toggle state
+    chrome.storage.local.get({ hideViewed: false, hideApplied: false }, function (result) {
+        hideViewedToggle.checked  = result.hideViewed;
+        hideAppliedToggle.checked = result.hideApplied;
+    });
+
+    // Save on change and notify content script immediately
+    function saveToggleAndRefresh() {
+        chrome.storage.local.set({
+            hideViewed:  hideViewedToggle.checked,
+            hideApplied: hideAppliedToggle.checked
+        }, () => {
+            // Tell the active LinkedIn tab to re-run hideJobs right now
+            chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+                if (tabs[0]) {
+                    chrome.tabs.sendMessage(tabs[0].id, { action: 'refreshHideJobs' });
+                }
+            });
+        });
+    }
+
+    hideViewedToggle.addEventListener('change',  saveToggleAndRefresh);
+    hideAppliedToggle.addEventListener('change', saveToggleAndRefresh);
 });

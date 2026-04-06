@@ -240,26 +240,38 @@ function hideJobs() {
     totalJobsCounter = jobItems.length;
     let currentHidden = 0;
 
-    jobItems.forEach(item => {
-        // ALWAYS evaluate the job text because LinkedIn's infinite scrolling 
-        // recycles list items and constantly replaces their text. 
-        const itemText = item.textContent.toLowerCase();
-        const shouldHide = countriesLower.some(country => itemText.includes(country));
+    // Read toggle settings from storage (cached, refreshed each call)
+    chrome.storage.local.get({ hideViewed: false, hideApplied: false }, function (settings) {
+        const hideViewed  = settings.hideViewed;
+        const hideApplied = settings.hideApplied;
 
-        if (shouldHide) {
-            // Force display: none to override any native LinkedIn styles
-            item.style.setProperty('display', 'none', 'important');
-            item.dataset.jobHidden = "true";
-            currentHidden++;
-        } else {
-            // Clear our style in case LinkedIn recycled a previously hidden element for a good job
-            item.style.removeProperty('display');
-            item.dataset.jobHidden = "false";
-        }
+        jobItems.forEach(item => {
+            const itemText = item.textContent.toLowerCase();
+            let shouldHide = countriesLower.some(country => itemText.includes(country));
+
+            // Check for "Viewed" / "Applied" footer labels
+            if (!shouldHide && (hideViewed || hideApplied)) {
+                const footerElem = item.querySelector('.job-card-container__footer-job-state');
+                if (footerElem) {
+                    const footerText = footerElem.textContent.trim().toLowerCase();
+                    if (hideViewed  && footerText === 'viewed')  shouldHide = true;
+                    if (hideApplied && footerText === 'applied') shouldHide = true;
+                }
+            }
+
+            if (shouldHide) {
+                item.style.setProperty('display', 'none', 'important');
+                item.dataset.jobHidden = "true";
+                currentHidden++;
+            } else {
+                item.style.removeProperty('display');
+                item.dataset.jobHidden = "false";
+            }
+        });
+
+        hiddenJobsCounter = currentHidden;
+        updateBadge();
     });
-
-    hiddenJobsCounter = currentHidden;
-    updateBadge(); // Refresh UI
 }
 
 function saveCurrentJob() {
@@ -717,4 +729,12 @@ const observer = new MutationObserver((mutations) => {
 observer.observe(document.body, {
     childList: true,
     subtree: true
+});
+
+// Listen for messages from the popup to re-run hideJobs immediately
+// (needed so unchecking a toggle un-hides jobs right away)
+chrome.runtime.onMessage.addListener(function (message) {
+    if (message.action === 'refreshHideJobs') {
+        hideJobs();
+    }
 });
