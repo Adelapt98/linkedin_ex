@@ -185,7 +185,7 @@ function extractJobInfo() {
         document.querySelector('.jobs-unified-top-card__subtitle');
 
     let location = 'N/A';
-    let timeAgo  = null;
+    let timeAgo = null;
 
     if (container) {
         const raw = container.textContent.replace(/\s+/g, ' ').trim();
@@ -225,8 +225,8 @@ function approxPostedTs(timeAgoStr) {
     const match = lower.match(/(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago/);
     if (!match) return null;
     const amount = parseInt(match[1]);
-    const unit   = match[2];
-    const msMap  = {
+    const unit = match[2];
+    const msMap = {
         second: 1000, minute: 60000, hour: 3600000,
         day: 86400000, week: 604800000, month: 2592000000, year: 31536000000
     };
@@ -559,10 +559,15 @@ function analyzeJobDescription() {
         // Extract title, link, location, and posting time from current page
         const viewedTitleElem = document.querySelector('.job-details-jobs-unified-top-card__job-title') || document.querySelector('.jobs-unified-top-card__job-title');
         const viewedTitle = viewedTitleElem ? viewedTitleElem.textContent.replace('📥 Save Job', '').replace('✅ Saved!', '').replace(/\s+/g, ' ').trim() : 'Unknown Title';
-        const viewedInfo     = extractJobInfo();
+        const viewedInfo = extractJobInfo();
         const viewedLocation = viewedInfo.location;
-        const viewedPostedTs    = approxPostedTs(viewedInfo.timeAgo);
+        const viewedPostedTs = approxPostedTs(viewedInfo.timeAgo);
         const viewedPostedLabel = viewedInfo.timeAgo && /^reposted/i.test(viewedInfo.timeAgo) ? 'Reposted' : 'Posted';
+
+        // Skip saving jobs from blocked countries
+        const locLower = viewedLocation.toLowerCase();
+        const isBlocked = countriesLower.some(c => locLower.includes(c));
+        if (isBlocked) return;
 
         chrome.storage.local.get(['jobLanguageCache'], (result) => {
             const cache = result.jobLanguageCache || {};
@@ -579,12 +584,12 @@ function analyzeJobDescription() {
                 ts: Date.now()
             };
 
-            // GC: Clean up items older than 30 days
+            // GC: Clean up unsaved items older than 30 days (saved jobs are kept forever)
             const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
             const now = Date.now();
             Object.keys(cache).forEach(k => {
-                if (now - cache[k].ts > thirtyDaysMs) {
-                    delete cache[k];
+                if (!cache[k].saved && now - cache[k].ts > thirtyDaysMs) {
+                    // delete cache[k];
                 }
             });
 
