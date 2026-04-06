@@ -110,6 +110,24 @@ const countriesToRemove = [
     "Spain", "Madrid", "Barcelona", "Valencia", "Seville", "Zaragoza", "Malaga", "Murcia", "Palma", "Catalonia", "Andalusia", "Galicia", "Basque Country", "Bilbao"
 ];
 
+let inMemoryLangCache = {};
+
+// Load language cache from storage initially
+chrome.storage.local.get(['jobLanguageCache'], function(result) {
+    if (result.jobLanguageCache) {
+        inMemoryLangCache = result.jobLanguageCache;
+        if(typeof injectListLabels === 'function') injectListLabels();
+    }
+});
+
+// Listen for updates to cache
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+    if (namespace === 'local' && changes.jobLanguageCache) {
+        inMemoryLangCache = changes.jobLanguageCache.newValue || {};
+        if(typeof injectListLabels === 'function') injectListLabels();
+    }
+});
+
 let totalJobsCounter = 0;
 let hiddenJobsCounter = 0;
 
@@ -471,12 +489,103 @@ function analyzeJobDescription() {
         reqPill.innerText = '⚠️ Mandatory Foreign Language Required (See highlighted text below)';
         bannerContainer.appendChild(reqPill);
     }
+
+    // --- SAVE TO PERSISTENT CACHE ---
+    const matchId = currentLink.match(/\/jobs\/view\/(\d+)/) || currentLink.match(/currentJobId=(\d+)/);
+    const jobId = matchId ? matchId[1] : null;
+
+    if (jobId) {
+        chrome.storage.local.get(['jobLanguageCache'], (result) => {
+            const cache = result.jobLanguageCache || {};
+            
+            // Always write/update storage when job is opened to refresh timestamp and capture any edits by the recruiter
+            cache[jobId] = {
+                isEnglish: isEnglish,
+                reqLang: foundMandatoryLanguage,
+                ts: Date.now()
+            };
+            
+            // GC: Clean up items older than 30 days
+            const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+            const now = Date.now();
+            Object.keys(cache).forEach(k => {
+                if (now - cache[k].ts > thirtyDaysMs) {
+                    delete cache[k];
+                }
+            });
+
+            chrome.storage.local.set({ jobLanguageCache: cache });
+        });
+    }
+}
+
+function injectListLabels() {
+    if (Object.keys(inMemoryLangCache).length === 0) return;
+
+    const jobCards = document.querySelectorAll('.job-card-container');
+    jobCards.forEach(card => {
+        // Find jobId either from card itself or parent wrap
+        const jobId = card.dataset.jobId || (card.parentElement && card.parentElement.dataset.occludableJobId);
+        if (!jobId || !inMemoryLangCache[jobId]) return;
+
+        // Ensure we don't inject twice
+        if (card.querySelector('.job-filter-list-lang-wrapper')) return;
+
+        const data = inMemoryLangCache[jobId];
+        
+        // Find a place to append the label in the card (metadata area is usually best)
+        const wrapper = card.querySelector('.job-card-container__metadata-wrapper') || card.querySelector('.artdeco-entity-lockup__caption');
+        if (wrapper) {
+            const labelContainer = document.createElement('div');
+            labelContainer.className = 'job-filter-list-lang-wrapper';
+            labelContainer.style.display = 'flex';
+            labelContainer.style.gap = '6px';
+            labelContainer.style.marginTop = '6px';
+
+            if (data.isEnglish) {
+                const eng = document.createElement('span');
+                eng.style.backgroundColor = '#e8f5e9';
+                eng.style.color = '#2e7d32';
+                eng.style.padding = '2px 6px';
+                eng.style.borderRadius = '4px';
+                eng.style.fontSize = '12px';
+                eng.style.fontWeight = 'bold';
+                eng.innerText = '[EN]';
+                labelContainer.appendChild(eng);
+            } else {
+                const nonEng = document.createElement('span');
+                nonEng.style.backgroundColor = '#ffebee';
+                nonEng.style.color = '#d32f2f';
+                nonEng.style.padding = '2px 6px';
+                nonEng.style.borderRadius = '4px';
+                nonEng.style.fontSize = '12px';
+                nonEng.style.fontWeight = 'bold';
+                nonEng.innerText = '[Non-EN]';
+                labelContainer.appendChild(nonEng);
+            }
+
+            if (data.reqLang) {
+                const req = document.createElement('span');
+                req.style.backgroundColor = '#fff3e0';
+                req.style.color = '#e65100';
+                req.style.padding = '2px 6px';
+                req.style.borderRadius = '4px';
+                req.style.fontSize = '12px';
+                req.style.fontWeight = 'bold';
+                req.innerText = '[Req. Lang]';
+                labelContainer.appendChild(req);
+            }
+
+            wrapper.appendChild(labelContainer);
+        }
+    });
 }
 
 // Initial run
 hideJobs();
 addSaveButton();
 analyzeJobDescription();
+injectListLabels();
 
 let debounceTimer;
 
@@ -484,9 +593,10 @@ let debounceTimer;
 const observer = new MutationObserver((mutations) => {
     let newJobsAdded = false;
     for (const mutation of mutations) {
-        // Ignore mutations caused by our own badge
+        // Ignore mutations caused by our own UI injections
         if (mutation.target.id === 'job-filter-badge' ||
-            (mutation.target.parentElement && mutation.target.parentElement.id === 'job-filter-badge')) {
+            (mutation.target.parentElement && mutation.target.parentElement.id === 'job-filter-badge') ||
+            (mutation.target.className && typeof mutation.target.className === 'string' && mutation.target.className.includes('job-filter-list-lang-wrapper'))) {
             continue;
         }
 
@@ -514,6 +624,7 @@ const observer = new MutationObserver((mutations) => {
             hideJobs();
             addSaveButton();
             analyzeJobDescription();
+            injectListLabels();
             // Reconnect the observer
             observer.observe(document.body, {
                 childList: true,
