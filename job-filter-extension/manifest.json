@@ -10,7 +10,14 @@
   },
   "permissions": [
     "storage",
-    "downloads"
+    "downloads",
+    "tabs"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["dashboard.html", "dashboard.js", "icons/*"],
+      "matches": ["<all_urls>"]
+    }
   ],
   "action": {
     "default_popup": "popup.html",

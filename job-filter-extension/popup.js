@@ -1,9 +1,17 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const jobCountElem = document.getElementById('job-count');
     const downloadBtn = document.getElementById('download-btn');
     const clearBtn = document.getElementById('clear-btn');
+    const dashboardBtn = document.getElementById('dashboard-btn');
 
     let currentJobs = [];
+
+    // Open Dashboard in new tab
+    if (dashboardBtn) {
+        dashboardBtn.addEventListener('click', function () {
+            chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
+        });
+    }
 
     // Load jobs from storage
     function loadJobs() {
