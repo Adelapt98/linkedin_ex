@@ -219,7 +219,13 @@ function saveCurrentJob() {
         }
 
         const descriptionElem = document.querySelector('.jobs-description__content') || document.querySelector('.job-details-jobs-unified-top-card__job-description') || document.getElementById('job-details');
-        const description = descriptionElem ? descriptionElem.textContent.trim() : '';
+        let description = descriptionElem ? descriptionElem.textContent.trim() : '';
+        
+        // Remove text injected by our extension so it doesn't pollute the CSV
+        description = description
+            .replace('✅ English Job Description', '')
+            .replace('🌍 Non-English Job Description', '')
+            .replace('⚠️ Mandatory Foreign Language Required (See highlighted text below)', '');
 
         const recruiterElem = document.querySelector('.hirer-card__hirer-information') || document.querySelector('.jobs-poster') || document.querySelector('.job-details-jobs-unified-top-card__hirer-profile-link');
         const recruiter = recruiterElem ? recruiterElem.textContent.replace(/\s+/g, ' ').trim() : 'N/A';
