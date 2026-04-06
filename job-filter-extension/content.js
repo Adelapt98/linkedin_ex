@@ -115,7 +115,11 @@ let hiddenJobsCounter = 0;
 
 function updateBadge() {
     let badge = document.getElementById('job-filter-badge');
-    if (!badge) {
+    
+    // Only show badge on jobs search page
+    const isSearchPage = window.location.href.includes('/jobs/search');
+    
+    if (!badge && isSearchPage) {
         badge = document.createElement('div');
         badge.id = 'job-filter-badge';
         badge.style.position = 'fixed';
@@ -133,7 +137,15 @@ function updateBadge() {
         badge.style.fontSize = '14px';
         document.body.appendChild(badge);
     }
-    badge.innerText = `Jobs loaded: ${totalJobsCounter} | Hidden: ${hiddenJobsCounter} | Visible: ${totalJobsCounter - hiddenJobsCounter}`;
+    
+    if (badge) {
+        if (isSearchPage) {
+            badge.style.display = 'block';
+            badge.innerText = `Jobs loaded: ${totalJobsCounter} | Hidden: ${hiddenJobsCounter} | Visible: ${totalJobsCounter - hiddenJobsCounter}`;
+        } else {
+            badge.style.display = 'none';
+        }
+    }
 }
 
 // Pre-calculate lowercased countries so we do it exactly once
@@ -237,15 +249,15 @@ function saveCurrentJob() {
             }
             jobs.push(jobObj);
             chrome.storage.local.set({ saved_jobs: jobs }, function() {
-                const btn = document.getElementById('job-filter-save-btn');
-                if (btn) {
+                const btns = document.querySelectorAll('.job-filter-save-btn-custom');
+                btns.forEach(btn => {
                     btn.innerHTML = '✅ Saved!';
                     btn.style.backgroundColor = '#20c997';
                     setTimeout(() => {
                         btn.innerHTML = '📥 Save Job (CSV)';
                         btn.style.backgroundColor = '#28a745';
                     }, 3000);
-                }
+                });
             });
         });
     } catch (e) {
@@ -254,39 +266,95 @@ function saveCurrentJob() {
 }
 
 function addSaveButton() {
-    const titleElem = document.querySelector('.job-details-jobs-unified-top-card__job-title') || document.querySelector('.jobs-unified-top-card__job-title');
-    if (titleElem && !document.getElementById('job-filter-save-btn')) {
-        const btnContainer = document.createElement('span');
-        btnContainer.style.display = 'inline-block';
-        btnContainer.style.verticalAlign = 'middle';
-
-        const btn = document.createElement('button');
-        btn.id = 'job-filter-save-btn';
-        btn.innerHTML = '📥 Save Job (CSV)';
-        btn.style.marginLeft = '12px';
-        btn.style.padding = '4px 12px';
-        btn.style.backgroundColor = '#28a745';
-        btn.style.color = '#fff';
-        btn.style.border = 'none';
-        btn.style.borderRadius = '20px';
-        btn.style.cursor = 'pointer';
-        btn.style.fontWeight = 'bold';
-        btn.style.fontSize = '14px';
-        btn.style.lineHeight = '20px';
-        btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
+    // Find all native Save buttons on the page (usually one in header, one sticky)
+    const nativeSaveButtons = document.querySelectorAll('.jobs-save-button');
+    
+    nativeSaveButtons.forEach((nativeBtn, index) => {
+        const customBtnId = 'job-filter-save-btn-' + index;
         
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            saveCurrentJob();
-        });
+        if (!document.getElementById(customBtnId)) {
+            const btnContainer = document.createElement('span');
+            btnContainer.style.display = 'inline-flex';
+            btnContainer.style.alignItems = 'center';
+            btnContainer.style.verticalAlign = 'middle';
+            btnContainer.style.marginRight = '8px';
+            btnContainer.style.marginLeft = '8px';
 
-        // Hover effect
-        btn.onmouseover = function() { btn.style.backgroundColor = '#218838'; }
-        btn.onmouseout = function() { btn.style.backgroundColor = '#28a745'; }
+            const btn = document.createElement('button');
+            btn.id = customBtnId;
+            btn.className = 'job-filter-save-btn-custom';
+            btn.innerHTML = '📥 Save Job (CSV)';
+            // Match padding visually
+            btn.style.padding = '5px 12px';
+            btn.style.backgroundColor = '#28a745';
+            btn.style.color = '#fff';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '20px';
+            btn.style.cursor = 'pointer';
+            btn.style.fontWeight = '600';
+            btn.style.fontSize = '14px';
+            btn.style.lineHeight = '24px';
+            btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
+            
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                saveCurrentJob();
+            });
 
-        btnContainer.appendChild(btn);
-        titleElem.appendChild(btnContainer);
+            // Hover effect
+            btn.onmouseover = function() { btn.style.backgroundColor = '#218838'; }
+            btn.onmouseout = function() { btn.style.backgroundColor = '#28a745'; }
+
+            btnContainer.appendChild(btn);
+            
+            // Insert our button exactly before the native LinkedIn Save button
+            nativeBtn.parentNode.insertBefore(btnContainer, nativeBtn);
+        }
+    });
+
+    // Fallback if no native save buttons are found yet
+    if (nativeSaveButtons.length === 0) {
+        let targetContainer = document.querySelector('.job-details-jobs-unified-top-card__sticky-buttons-container') ||
+                              document.querySelector('.jobs-unified-top-card__content--two-pane .jobs-s-apply') ||
+                              document.querySelector('.job-details-jobs-unified-top-card__job-title')?.parentElement;
+
+        if (targetContainer && !document.getElementById('job-filter-save-btn-fallback')) {
+            const btnContainer = document.createElement('span');
+            btnContainer.style.display = 'inline-flex';
+            btnContainer.style.alignItems = 'center';
+            btnContainer.style.verticalAlign = 'middle';
+            btnContainer.style.marginRight = '8px';
+
+            const btn = document.createElement('button');
+            btn.id = 'job-filter-save-btn-fallback';
+            btn.className = 'job-filter-save-btn-custom';
+            btn.innerHTML = '📥 Save Job (CSV)';
+            btn.style.padding = '4px 12px';
+            btn.style.backgroundColor = '#28a745';
+            btn.style.color = '#fff';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '20px';
+            btn.style.cursor = 'pointer';
+            btn.style.fontWeight = '600';
+            btn.style.fontSize = '14px';
+            btn.style.lineHeight = '24px';
+            btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
+            
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                saveCurrentJob();
+            });
+
+            // Hover effect
+            btn.onmouseover = function() { btn.style.backgroundColor = '#218838'; }
+            btn.onmouseout = function() { btn.style.backgroundColor = '#28a745'; }
+
+            btnContainer.appendChild(btn);
+            
+            targetContainer.insertBefore(btnContainer, targetContainer.firstChild);
+        }
     }
 }
 
