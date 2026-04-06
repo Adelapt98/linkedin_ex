@@ -1,2 +1,12 @@
 .DS_Store
 examples/
+node_modules/
+package-lock.json
+package.json
+
+# Test scripts
+test_parse.js
+run_tests.js
+
+# Data exports
+*.csv

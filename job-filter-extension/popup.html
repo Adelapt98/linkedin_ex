@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Saved Jobs CSV</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            width: 250px;
+            padding: 15px;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+        h2 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+        }
+        p {
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
+        .stats {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0a66c2;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+        #download-btn {
+            background-color: #0a66c2;
+            color: white;
+        }
+        #download-btn:hover {
+            background-color: #004182;
+        }
+        #clear-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        #clear-btn:hover {
+            background-color: #c82333;
+        }
+        #download-btn:disabled, #clear-btn:disabled {
+            background-color: #b0c4de;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h2>Saved LinkedIn Jobs</h2>
+    <div class="stats" id="job-count">0</div>
+    <p>Jobs ready for export</p>
+
+    <div class="btn-group">
+        <button id="download-btn" disabled>📥 Download CSV</button>
+        <button id="clear-btn" disabled>🗑️ Clear Saved Jobs</button>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

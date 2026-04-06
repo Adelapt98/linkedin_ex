@@ -168,8 +168,131 @@ function hideJobs() {
     updateBadge(); // Refresh UI
 }
 
+function saveCurrentJob() {
+    try {
+        const titleElem = document.querySelector('.job-details-jobs-unified-top-card__job-title') || document.querySelector('.jobs-unified-top-card__job-title');
+        
+        let title = 'Unknown Title';
+        if (titleElem) {
+            // We remove the button text if it got caught in the textContent
+            title = titleElem.textContent
+                .replace('📥 Save Job (CSV)', '')
+                .replace('✅ Saved!', '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+        
+        const linkElem = document.querySelector('.job-details-jobs-unified-top-card__job-title a') || document.querySelector('.jobs-unified-top-card__job-title a');
+        let link = window.location.href; 
+        if (linkElem && linkElem.href) {
+            link = linkElem.href;
+        }
+
+        const descriptionElem = document.querySelector('.jobs-description__content') || document.querySelector('.job-details-jobs-unified-top-card__job-description') || document.getElementById('job-details');
+        const description = descriptionElem ? descriptionElem.textContent.trim() : '';
+
+        const recruiterElem = document.querySelector('.hirer-card__hirer-information') || document.querySelector('.jobs-poster') || document.querySelector('.job-details-jobs-unified-top-card__hirer-profile-link');
+        const recruiter = recruiterElem ? recruiterElem.textContent.replace(/\s+/g, ' ').trim() : 'N/A';
+
+        // Attempt to find recruiter link
+        let recruiterLink = 'N/A';
+        const hirerCard = document.querySelector('.hirer-card') || document.querySelector('.jobs-poster');
+        if (hirerCard) {
+            const aTag = hirerCard.querySelector('a');
+            if (aTag && aTag.href && aTag.href.includes('linkedin.com/in/')) {
+                recruiterLink = aTag.href.split('?')[0];
+            }
+        } 
+        if (recruiterLink === 'N/A' && recruiterElem) {
+            if (recruiterElem.tagName.toUpperCase() === 'A' && recruiterElem.href) {
+                recruiterLink = recruiterElem.href.split('?')[0];
+            } else {
+                const aTag = recruiterElem.querySelector('a');
+                if (aTag && aTag.href) recruiterLink = aTag.href.split('?')[0];
+            }
+        }
+
+        // Extract emails
+        const emailsMatches = description.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi);
+        const email = emailsMatches ? [...new Set(emailsMatches)].join(', ') : 'N/A';
+
+        const rawLink = link.split('?')[0]; // simple link
+
+        const jobObj = {
+            id: Date.now(),
+            title: title,
+            link: rawLink,
+            description: description.replace(/\r?\n|\r/g, ' ').replace(/"/g, '""'), // safe for csv
+            email: email,
+            recruiter: recruiter,
+            recruiterLink: recruiterLink,
+            dateSaved: new Date().toISOString()
+        };
+
+        chrome.storage.local.get({ saved_jobs: [] }, function(result) {
+            const jobs = result.saved_jobs;
+            // Prevent duplicate saves of same title/link sequence quickly
+            if (jobs.length > 0 && jobs[jobs.length - 1].link === rawLink) {
+                return;
+            }
+            jobs.push(jobObj);
+            chrome.storage.local.set({ saved_jobs: jobs }, function() {
+                const btn = document.getElementById('job-filter-save-btn');
+                if (btn) {
+                    btn.innerHTML = '✅ Saved!';
+                    btn.style.backgroundColor = '#20c997';
+                    setTimeout(() => {
+                        btn.innerHTML = '📥 Save Job (CSV)';
+                        btn.style.backgroundColor = '#28a745';
+                    }, 3000);
+                }
+            });
+        });
+    } catch (e) {
+        console.error("LinkedIn Job Filter: Failed to save job", e);
+    }
+}
+
+function addSaveButton() {
+    const titleElem = document.querySelector('.job-details-jobs-unified-top-card__job-title') || document.querySelector('.jobs-unified-top-card__job-title');
+    if (titleElem && !document.getElementById('job-filter-save-btn')) {
+        const btnContainer = document.createElement('span');
+        btnContainer.style.display = 'inline-block';
+        btnContainer.style.verticalAlign = 'middle';
+
+        const btn = document.createElement('button');
+        btn.id = 'job-filter-save-btn';
+        btn.innerHTML = '📥 Save Job (CSV)';
+        btn.style.marginLeft = '12px';
+        btn.style.padding = '4px 12px';
+        btn.style.backgroundColor = '#28a745';
+        btn.style.color = '#fff';
+        btn.style.border = 'none';
+        btn.style.borderRadius = '20px';
+        btn.style.cursor = 'pointer';
+        btn.style.fontWeight = 'bold';
+        btn.style.fontSize = '14px';
+        btn.style.lineHeight = '20px';
+        btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
+        
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            saveCurrentJob();
+        });
+
+        // Hover effect
+        btn.onmouseover = function() { btn.style.backgroundColor = '#218838'; }
+        btn.onmouseout = function() { btn.style.backgroundColor = '#28a745'; }
+
+        btnContainer.appendChild(btn);
+        titleElem.appendChild(btnContainer);
+    }
+}
+
 // Initial run
 hideJobs();
+addSaveButton();
 
 let debounceTimer;
 
@@ -205,6 +328,7 @@ const observer = new MutationObserver((mutations) => {
             // Temporarily disconnect to avoid our own DOM changes triggering the observer
             observer.disconnect();
             hideJobs();
+            addSaveButton();
             // Reconnect the observer
             observer.observe(document.body, {
                 childList: true,

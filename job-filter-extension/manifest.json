@@ -3,6 +3,13 @@
   "name": "LinkedIn Job Filter",
   "version": "1.0",
   "description": "Hides specific jobs on LinkedIn job search page based on keywords.",
+  "permissions": [
+    "storage",
+    "downloads"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
   "content_scripts": [
     {
       "matches": [
