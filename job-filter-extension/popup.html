@@ -58,9 +58,17 @@
         #clear-btn:hover {
             background-color: #c82333;
         }
-        #download-btn:disabled, #clear-btn:disabled {
+        #clear-btn:disabled {
             background-color: #b0c4de;
             cursor: not-allowed;
+        }
+        #clear-history-btn {
+            background-color: #f0ad4e;
+            color: white;
+            margin-top: 15px; /* Separate it from CSV tools */
+        }
+        #clear-history-btn:hover {
+            background-color: #ec971f;
         }
     </style>
 </head>
@@ -72,6 +80,7 @@
     <div class="btn-group">
         <button id="download-btn" disabled>📥 Download CSV</button>
         <button id="clear-btn" disabled>🗑️ Clear Saved Jobs</button>
+        <button id="clear-history-btn">🧹 Clear Viewing History</button>
     </div>
 
     <script src="popup.js"></script>

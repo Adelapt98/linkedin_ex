@@ -78,4 +78,19 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+    // Handle Clear History
+    const clearHistoryBtn = document.getElementById('clear-history-btn');
+    if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener('click', function() {
+            if (confirm("Are you sure you want to clear your job viewing history (Language Tags)? This cannot be undone.")) {
+                chrome.storage.local.remove('jobLanguageCache', function() {
+                    const originalText = clearHistoryBtn.innerText;
+                    clearHistoryBtn.innerText = "✅ Cleared!";
+                    setTimeout(() => {
+                        clearHistoryBtn.innerText = originalText;
+                    }, 2000);
+                });
+            }
+        });
+    }
 });

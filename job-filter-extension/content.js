@@ -113,18 +113,18 @@ const countriesToRemove = [
 let inMemoryLangCache = {};
 
 // Load language cache from storage initially
-chrome.storage.local.get(['jobLanguageCache'], function(result) {
+chrome.storage.local.get(['jobLanguageCache'], function (result) {
     if (result.jobLanguageCache) {
         inMemoryLangCache = result.jobLanguageCache;
-        if(typeof injectListLabels === 'function') injectListLabels();
+        if (typeof injectListLabels === 'function') injectListLabels();
     }
 });
 
 // Listen for updates to cache
-chrome.storage.onChanged.addListener(function(changes, namespace) {
+chrome.storage.onChanged.addListener(function (changes, namespace) {
     if (namespace === 'local' && changes.jobLanguageCache) {
         inMemoryLangCache = changes.jobLanguageCache.newValue || {};
-        if(typeof injectListLabels === 'function') injectListLabels();
+        if (typeof injectListLabels === 'function') injectListLabels();
     }
 });
 
@@ -133,10 +133,10 @@ let hiddenJobsCounter = 0;
 
 function updateBadge() {
     let badge = document.getElementById('job-filter-badge');
-    
+
     // Only show badge on jobs search page
     const isSearchPage = window.location.href.includes('/jobs/search');
-    
+
     if (!badge && isSearchPage) {
         badge = document.createElement('div');
         badge.id = 'job-filter-badge';
@@ -155,7 +155,7 @@ function updateBadge() {
         badge.style.fontSize = '14px';
         document.body.appendChild(badge);
     }
-    
+
     if (badge) {
         if (isSearchPage) {
             badge.style.display = 'block';
@@ -201,26 +201,26 @@ function hideJobs() {
 function saveCurrentJob() {
     try {
         const titleElem = document.querySelector('.job-details-jobs-unified-top-card__job-title') || document.querySelector('.jobs-unified-top-card__job-title');
-        
+
         let title = 'Unknown Title';
         if (titleElem) {
             // We remove the button text if it got caught in the textContent
             title = titleElem.textContent
-                .replace('📥 Save Job (CSV)', '')
+                .replace('📥 Save Job', '')
                 .replace('✅ Saved!', '')
                 .replace(/\s+/g, ' ')
                 .trim();
         }
-        
+
         const linkElem = document.querySelector('.job-details-jobs-unified-top-card__job-title a') || document.querySelector('.jobs-unified-top-card__job-title a');
-        let link = window.location.href; 
+        let link = window.location.href;
         if (linkElem && linkElem.href) {
             link = linkElem.href;
         }
 
         const descriptionElem = document.querySelector('.jobs-description__content') || document.querySelector('.job-details-jobs-unified-top-card__job-description') || document.getElementById('job-details');
         let description = descriptionElem ? descriptionElem.textContent.trim() : '';
-        
+
         // Remove text injected by our extension so it doesn't pollute the CSV
         description = description
             .replace('✅ English Job Description', '')
@@ -238,7 +238,7 @@ function saveCurrentJob() {
             if (aTag && aTag.href && aTag.href.includes('linkedin.com/in/')) {
                 recruiterLink = aTag.href.split('?')[0];
             }
-        } 
+        }
         if (recruiterLink === 'N/A' && recruiterElem) {
             if (recruiterElem.tagName.toUpperCase() === 'A' && recruiterElem.href) {
                 recruiterLink = recruiterElem.href.split('?')[0];
@@ -265,20 +265,20 @@ function saveCurrentJob() {
             dateSaved: new Date().toISOString()
         };
 
-        chrome.storage.local.get({ saved_jobs: [] }, function(result) {
+        chrome.storage.local.get({ saved_jobs: [] }, function (result) {
             const jobs = result.saved_jobs;
             // Prevent duplicate saves of same title/link sequence quickly
             if (jobs.length > 0 && jobs[jobs.length - 1].link === rawLink) {
                 return;
             }
             jobs.push(jobObj);
-            chrome.storage.local.set({ saved_jobs: jobs }, function() {
+            chrome.storage.local.set({ saved_jobs: jobs }, function () {
                 const btns = document.querySelectorAll('.job-filter-save-btn-custom');
                 btns.forEach(btn => {
                     btn.innerHTML = '✅ Saved!';
                     btn.style.backgroundColor = '#20c997';
                     setTimeout(() => {
-                        btn.innerHTML = '📥 Save Job (CSV)';
+                        btn.innerHTML = '📥 Save Job';
                         btn.style.backgroundColor = '#28a745';
                     }, 3000);
                 });
@@ -292,10 +292,10 @@ function saveCurrentJob() {
 function addSaveButton() {
     // Find all native Save buttons on the page (usually one in header, one sticky)
     const nativeSaveButtons = document.querySelectorAll('.jobs-save-button');
-    
+
     nativeSaveButtons.forEach((nativeBtn, index) => {
         const customBtnId = 'job-filter-save-btn-' + index;
-        
+
         if (!document.getElementById(customBtnId)) {
             const btnContainer = document.createElement('span');
             btnContainer.style.display = 'inline-flex';
@@ -307,7 +307,7 @@ function addSaveButton() {
             const btn = document.createElement('button');
             btn.id = customBtnId;
             btn.className = 'job-filter-save-btn-custom';
-            btn.innerHTML = '📥 Save Job (CSV)';
+            btn.innerHTML = '📥 Save Job';
             // Match padding visually
             btn.style.padding = '5px 12px';
             btn.style.backgroundColor = '#28a745';
@@ -319,19 +319,19 @@ function addSaveButton() {
             btn.style.fontSize = '14px';
             btn.style.lineHeight = '24px';
             btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
-            
-            btn.addEventListener('click', function(e) {
+
+            btn.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 saveCurrentJob();
             });
 
             // Hover effect
-            btn.onmouseover = function() { btn.style.backgroundColor = '#218838'; }
-            btn.onmouseout = function() { btn.style.backgroundColor = '#28a745'; }
+            btn.onmouseover = function () { btn.style.backgroundColor = '#218838'; }
+            btn.onmouseout = function () { btn.style.backgroundColor = '#28a745'; }
 
             btnContainer.appendChild(btn);
-            
+
             // Insert our button exactly before the native LinkedIn Save button
             nativeBtn.parentNode.insertBefore(btnContainer, nativeBtn);
         }
@@ -340,8 +340,8 @@ function addSaveButton() {
     // Fallback if no native save buttons are found yet
     if (nativeSaveButtons.length === 0) {
         let targetContainer = document.querySelector('.job-details-jobs-unified-top-card__sticky-buttons-container') ||
-                              document.querySelector('.jobs-unified-top-card__content--two-pane .jobs-s-apply') ||
-                              document.querySelector('.job-details-jobs-unified-top-card__job-title')?.parentElement;
+            document.querySelector('.jobs-unified-top-card__content--two-pane .jobs-s-apply') ||
+            document.querySelector('.job-details-jobs-unified-top-card__job-title')?.parentElement;
 
         if (targetContainer && !document.getElementById('job-filter-save-btn-fallback')) {
             const btnContainer = document.createElement('span');
@@ -353,7 +353,7 @@ function addSaveButton() {
             const btn = document.createElement('button');
             btn.id = 'job-filter-save-btn-fallback';
             btn.className = 'job-filter-save-btn-custom';
-            btn.innerHTML = '📥 Save Job (CSV)';
+            btn.innerHTML = '📥 Save Job';
             btn.style.padding = '4px 12px';
             btn.style.backgroundColor = '#28a745';
             btn.style.color = '#fff';
@@ -364,19 +364,19 @@ function addSaveButton() {
             btn.style.fontSize = '14px';
             btn.style.lineHeight = '24px';
             btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
-            
-            btn.addEventListener('click', function(e) {
+
+            btn.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 saveCurrentJob();
             });
 
             // Hover effect
-            btn.onmouseover = function() { btn.style.backgroundColor = '#218838'; }
-            btn.onmouseout = function() { btn.style.backgroundColor = '#28a745'; }
+            btn.onmouseover = function () { btn.style.backgroundColor = '#218838'; }
+            btn.onmouseout = function () { btn.style.backgroundColor = '#28a745'; }
 
             btnContainer.appendChild(btn);
-            
+
             targetContainer.insertBefore(btnContainer, targetContainer.firstChild);
         }
     }
@@ -386,14 +386,14 @@ function analyzeJobDescription() {
     // Only analyze when the job details section and description is present
     const jobDetailsContainer = document.getElementById('job-details') || document.querySelector('.jobs-description__content');
     if (!jobDetailsContainer) return;
-    
+
     // Check if we already analyzed this job by checking the current job URL
     let currentLink = window.location.href.split('?')[0];
     const linkElem = document.querySelector('.job-details-jobs-unified-top-card__job-title a') || document.querySelector('.jobs-unified-top-card__job-title a');
     if (linkElem && linkElem.href) {
         currentLink = linkElem.href.split('?')[0];
     }
-    
+
     // We can tag the container to prevent re-analyzing the same job description
     if (jobDetailsContainer.dataset.analyzedLink === currentLink) {
         return;
@@ -407,7 +407,7 @@ function analyzeJobDescription() {
     const englishWords = /\b(the|and|to|of|a|in|for|is|on|that|by|this|with|i|you|it|not|or|be|are|from|at|as|your|we)\b/gi;
     const matches = fullText.match(englishWords);
     const wordCount = fullText.split(/\s+/).length;
-    
+
     // If English stop words make up less than 15% of the word count, it's NOT English.
     // (Pure English usually sits around 25-35%. The Finnish example provided sits at 5.4%).
     const isEnglish = matches && (matches.length / wordCount) > 0.15;
@@ -426,7 +426,7 @@ function analyzeJobDescription() {
 
     // 2. Discover mandatory foreign languages
     let foundMandatoryLanguage = false;
-    
+
     const langRegex = /\b(german|french|spanish|italian|dutch|swedish|norwegian|danish|finnish|polish|portuguese|russian|arabic|chinese|japanese|korean|deutsch|français|español|nederlands|svenska|norsk|suomi)\b/i;
     const reqRegex = /\b(fluent|native|proficient|proficiency|required|mandatory|must|speak|command|b2|c1|c2|mother tongue)\b/i;
     const optRegex = /\b(bonus|plus|advantage|nice to have|optional|preferred)\b/i;
@@ -437,10 +437,10 @@ function analyzeJobDescription() {
         if (block.querySelector('p, li, ul')) return;
         // We only want to analyze leaf nodes essentially, to prevent highlighting parent divs entirely
         if (block.children.length > 2 && block.tagName === 'DIV') return;
-        
+
         const text = block.textContent;
         // Don't flag English itself as a foreign mandatory language since the user wants "except than english"
-        if(langRegex.test(text) && reqRegex.test(text) && !optRegex.test(text)) {
+        if (langRegex.test(text) && reqRegex.test(text) && !optRegex.test(text)) {
             block.style.color = '#d32f2f'; // Red color
             block.style.fontWeight = 'bold';
             block.style.backgroundColor = '#ffebee';
@@ -469,13 +469,13 @@ function analyzeJobDescription() {
     }
 
     bannerContainer.innerHTML = ''; // clear out old content
-    
+
     // Primary Language Banner
     const langPill = document.createElement('div');
     langPill.style.padding = '8px 12px';
     langPill.style.borderRadius = '6px';
     langPill.style.color = '#fff';
-    
+
     if (isEnglish) {
         langPill.style.backgroundColor = '#2e7d32'; // Green
         langPill.innerText = '✅ English Job Description';
@@ -503,14 +503,14 @@ function analyzeJobDescription() {
     if (jobId) {
         chrome.storage.local.get(['jobLanguageCache'], (result) => {
             const cache = result.jobLanguageCache || {};
-            
+
             // Always write/update storage when job is opened to refresh timestamp and capture any edits by the recruiter
             cache[jobId] = {
                 isEnglish: isEnglish,
                 reqLang: foundMandatoryLanguage,
                 ts: Date.now()
             };
-            
+
             // GC: Clean up items older than 30 days
             const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
             const now = Date.now();
@@ -538,7 +538,7 @@ function injectListLabels() {
         if (card.querySelector('.job-filter-list-lang-wrapper')) return;
 
         const data = inMemoryLangCache[jobId];
-        
+
         // Find a place to append the label in the card (metadata area is usually best)
         const wrapper = card.querySelector('.job-card-container__metadata-wrapper') || card.querySelector('.artdeco-entity-lockup__caption');
         if (wrapper) {
