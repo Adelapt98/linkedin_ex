@@ -264,24 +264,22 @@ function hideJobs() {
 
 function saveCurrentJob() {
     try {
-        const titleElem = document.querySelector('.job-details-jobs-unified-top-card__job-title') || document.querySelector('.jobs-unified-top-card__job-title');
-
-        let title = 'Unknown Title';
-        if (titleElem) {
-            // We remove the button text if it got caught in the textContent
-            title = titleElem.textContent
-                .replace('📥 Save Job', '')
-                .replace('✅ Saved!', '')
-                .replace(/\s+/g, ' ')
-                .trim();
-        }
-
+        // Extract the job ID from the current URL
         const linkElem = document.querySelector('.job-details-jobs-unified-top-card__job-title a') || document.querySelector('.jobs-unified-top-card__job-title a');
         let link = window.location.href;
         if (linkElem && linkElem.href) {
             link = linkElem.href;
         }
+        const rawLink = link.split('?')[0];
+        const matchId = rawLink.match(/\/jobs\/view\/(\d+)/) || rawLink.match(/currentJobId=(\d+)/);
+        const jobId = matchId ? matchId[1] : null;
 
+        if (!jobId) {
+            console.warn('[Job Filter] Cannot determine job ID for save.');
+            return;
+        }
+
+        // Extract save-only fields: description, email, recruiter, recruiterLink
         const descriptionElem = document.querySelector('.jobs-description__content') || document.querySelector('.job-details-jobs-unified-top-card__job-description') || document.getElementById('job-details');
         let description = descriptionElem ? descriptionElem.textContent.trim() : '';
 
@@ -294,7 +292,6 @@ function saveCurrentJob() {
         const recruiterElem = document.querySelector('.hirer-card__hirer-information') || document.querySelector('.jobs-poster') || document.querySelector('.job-details-jobs-unified-top-card__hirer-profile-link');
         const recruiter = recruiterElem ? recruiterElem.textContent.replace(/\s+/g, ' ').trim() : 'N/A';
 
-        // Attempt to find recruiter link
         let recruiterLink = 'N/A';
         const hirerCard = document.querySelector('.hirer-card') || document.querySelector('.jobs-poster');
         if (hirerCard) {
@@ -312,40 +309,25 @@ function saveCurrentJob() {
             }
         }
 
-        // Extract emails
         const emailsMatches = description.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi);
         const email = emailsMatches ? [...new Set(emailsMatches)].join(', ') : 'N/A';
 
-        // Extract job location + posting time-ago via shared helper
-        const jobInfo = extractJobInfo();
-        const location     = jobInfo.location;
-        const postedTs     = approxPostedTs(jobInfo.timeAgo);
-        const postedLabel  = jobInfo.timeAgo && /^reposted/i.test(jobInfo.timeAgo) ? 'Reposted' : 'Posted';
+        // Merge save-only fields into the existing cache entry
+        chrome.storage.local.get(['jobLanguageCache'], (result) => {
+            const cache = result.jobLanguageCache || {};
+            const existing = cache[jobId] || {};
 
-        const rawLink = link.split('?')[0]; // simple link
+            cache[jobId] = {
+                ...existing,
+                saved: true,
+                email: email,
+                recruiter: recruiter,
+                recruiterLink: recruiterLink,
+                description: description.replace(/\r?\n|\r/g, ' ').replace(/"/g, '""'),
+                dateSaved: new Date().toISOString()
+            };
 
-        const jobObj = {
-            id: Date.now(),
-            title: title,
-            link: rawLink,
-            location: location,
-            postedTs: postedTs,
-            postedLabel: postedLabel,
-            description: description.replace(/\r?\n|\r/g, ' ').replace(/"/g, '""'), // safe for csv
-            email: email,
-            recruiter: recruiter,
-            recruiterLink: recruiterLink,
-            dateSaved: new Date().toISOString()
-        };
-
-        chrome.storage.local.get({ saved_jobs: [] }, function (result) {
-            const jobs = result.saved_jobs;
-            // Prevent duplicate saves of same title/link sequence quickly
-            if (jobs.length > 0 && jobs[jobs.length - 1].link === rawLink) {
-                return;
-            }
-            jobs.push(jobObj);
-            chrome.storage.local.set({ saved_jobs: jobs }, function () {
+            chrome.storage.local.set({ jobLanguageCache: cache }, function () {
                 const btns = document.querySelectorAll('.job-filter-save-btn-custom');
                 btns.forEach(btn => {
                     btn.innerHTML = '✅ Saved!';

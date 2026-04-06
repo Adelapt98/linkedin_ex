@@ -1,59 +1,88 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     // ── State ──────────────────────────────────────────────────────────
-    let langCache = {};
-    let savedJobIds = new Set();
+    let cache = {};
 
-    let sortCol = 'ts';
-    let sortDir = -1; // newest first
+    const sortState = {
+        saved: { col: 'dateSaved', dir: -1 },
+        viewed: { col: 'ts', dir: -1 }
+    };
 
     // ── DOM refs ───────────────────────────────────────────────────────
-    const totalBadge  = document.getElementById('total-badge');
-    const tbody       = document.getElementById('jobs-tbody');
-    const emptyState  = document.getElementById('empty-state');
-    const rowCount    = document.getElementById('row-count');
-    const searchInput = document.getElementById('search-input');
-    const langFilter  = document.getElementById('lang-filter');
-    const savedFilter = document.getElementById('saved-filter');
+    const totalBadge = document.getElementById('total-badge');
+    const tbodySaved = document.getElementById('tbody-saved');
+    const tbodyViewed = document.getElementById('tbody-viewed');
+    const emptySaved = document.getElementById('empty-saved');
+    const emptyViewed = document.getElementById('empty-viewed');
+    const rowCountSaved = document.getElementById('row-count-saved');
+    const rowCountViewed = document.getElementById('row-count-viewed');
+    const searchSaved = document.getElementById('search-saved');
+    const searchViewed = document.getElementById('search-viewed');
+    const langFilterSaved = document.getElementById('lang-filter-saved');
+    const langFilterViewed = document.getElementById('lang-filter-viewed');
+    const savedFilterViewed = document.getElementById('saved-filter-viewed');
+
+    // Description modal
+    const descOverlay = document.getElementById('desc-overlay');
+    const descClose = document.getElementById('desc-close');
+    const descTitle = document.getElementById('desc-modal-title');
+    const descBody = document.getElementById('desc-modal-body');
+
+    descClose.addEventListener('click', () => descOverlay.classList.remove('open'));
+    descOverlay.addEventListener('click', (e) => {
+        if (e.target === descOverlay) descOverlay.classList.remove('open');
+    });
 
     // ── Load data ──────────────────────────────────────────────────────
-    chrome.storage.local.get({ saved_jobs: [], jobLanguageCache: {} }, function (result) {
-        langCache = result.jobLanguageCache || {};
+    chrome.storage.local.get({ jobLanguageCache: {} }, function (result) {
+        cache = result.jobLanguageCache || {};
+        updateBadge();
+        renderSaved();
+        renderViewed();
+    });
 
-        // Build set of job IDs that are in the saved list
-        savedJobIds = new Set();
-        (result.saved_jobs || []).forEach(job => {
-            const m = job.link && (job.link.match(/\/jobs\/view\/(\d+)/) || job.link.match(/currentJobId=(\d+)/));
-            if (m) savedJobIds.add(m[1]);
+    function updateBadge() {
+        const savedCount = Object.values(cache).filter(d => d.saved).length;
+        const totalCount = Object.keys(cache).length;
+        totalBadge.textContent = `${savedCount} saved · ${totalCount} viewed`;
+    }
+
+    // ── Tab switching ──────────────────────────────────────────────────
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(this.dataset.panel).classList.add('active');
         });
-
-        const total = Object.keys(langCache).length;
-        totalBadge.textContent = total + (total === 1 ? ' viewed' : ' viewed');
-        render();
     });
 
     // ── Filter / search listeners ──────────────────────────────────────
-    searchInput.addEventListener('input',  render);
-    langFilter.addEventListener('change',  render);
-    savedFilter.addEventListener('change', render);
+    searchSaved.addEventListener('input', renderSaved);
+    langFilterSaved.addEventListener('change', renderSaved);
+    searchViewed.addEventListener('input', renderViewed);
+    langFilterViewed.addEventListener('change', renderViewed);
+    savedFilterViewed.addEventListener('change', renderViewed);
 
     // ── Column sort ────────────────────────────────────────────────────
     document.querySelectorAll('th[data-col]').forEach(th => {
         th.addEventListener('click', function () {
+            const tbl = this.dataset.table;
             const col = this.dataset.col;
-            if (sortCol === col) {
-                sortDir *= -1;
+            if (sortState[tbl].col === col) {
+                sortState[tbl].dir *= -1;
             } else {
-                sortCol = col;
-                sortDir = 1;
+                sortState[tbl].col = col;
+                sortState[tbl].dir = 1;
             }
-            document.querySelectorAll('th[data-col]').forEach(t => {
+            document.querySelectorAll(`th[data-table="${tbl}"]`).forEach(t => {
                 t.classList.remove('sorted');
                 t.querySelector('.sort-arrow').textContent = '↕';
             });
             this.classList.add('sorted');
-            this.querySelector('.sort-arrow').textContent = sortDir === 1 ? '↑' : '↓';
-            render();
+            this.querySelector('.sort-arrow').textContent = sortState[tbl].dir === 1 ? '↑' : '↓';
+            if (tbl === 'saved') renderSaved();
+            else renderViewed();
         });
     });
 
@@ -62,18 +91,18 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!isoOrMs) return '—';
         try {
             const d = new Date(isoOrMs);
-            const day   = String(d.getDate()).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
             const month = d.toLocaleString('en-GB', { month: 'short' });
-            const year  = d.getFullYear();
-            const hh    = String(d.getHours()).padStart(2, '0');
-            const mm    = String(d.getMinutes()).padStart(2, '0');
+            const year = d.getFullYear();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
             return `${day} ${month} ${year} - ${hh}:${mm}`;
         } catch (e) { return String(isoOrMs); }
     }
 
-    function formatPostedDate(postedTs, postedLabel) {
-        if (!postedTs) return '—';
-        return `${formatDateTime(postedTs)} (${postedLabel || 'Posted'})`;
+    function formatPostedDate(ts, label) {
+        if (!ts) return '—';
+        return `${formatDateTime(ts)} (${label || 'Posted'})`;
     }
 
     function buildLangCell(data) {
@@ -91,57 +120,200 @@ document.addEventListener('DOMContentLoaded', function () {
             : '<span style="background:#f5f5f5;color:#888;padding:3px 8px;border-radius:4px;font-size:11px;">—</span>';
     }
 
-    // ── Filter ─────────────────────────────────────────────────────────
-    function getFiltered() {
-        const q  = searchInput.value.toLowerCase().trim();
-        const lv = langFilter.value;
-        const sv = savedFilter.value;
+    function sortItems(arr, col, dir) {
+        return [...arr].sort((a, b) => {
+            let av = col === 'lang' ? (a.isEnglish ? 'en' : 'non') : (a[col] || '');
+            let bv = col === 'lang' ? (b.isEnglish ? 'en' : 'non') : (b[col] || '');
+            if (av < bv) return -1 * dir;
+            if (av > bv) return 1 * dir;
+            return 0;
+        });
+    }
 
-        return Object.entries(langCache)
+    function showDescription(title, desc) {
+        descTitle.textContent = title || 'Job Description';
+        descBody.textContent = desc || '(No description saved)';
+        descOverlay.classList.add('open');
+    }
+
+    function saveCache(cb) {
+        chrome.storage.local.set({ jobLanguageCache: cache }, cb || function () { });
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // SAVED JOBS TAB
+    // ══════════════════════════════════════════════════════════════════
+    function filterSaved() {
+        const q = searchSaved.value.toLowerCase().trim();
+        const lv = langFilterSaved.value;
+
+        return Object.entries(cache)
             .filter(([id, data]) => {
-                const hay = [data.title, data.location].join(' ').toLowerCase();
+                if (!data.saved) return false;
+                const hay = [data.title, data.location, data.recruiter, data.email].join(' ').toLowerCase();
                 if (q && !hay.includes(q)) return false;
-                if (lv === 'en'     && !data.isEnglish) return false;
-                if (lv === 'non-en' &&  data.isEnglish) return false;
-                if (lv === 'req'    && !data.reqLang)   return false;
-                if (sv === 'saved'     && !savedJobIds.has(id)) return false;
-                if (sv === 'not-saved' &&  savedJobIds.has(id)) return false;
+                if (lv === 'en' && !data.isEnglish) return false;
+                if (lv === 'non-en' && data.isEnglish) return false;
+                if (lv === 'req' && !data.reqLang) return false;
                 return true;
             })
             .map(([id, data]) => ({ id, ...data }));
     }
 
-    // ── Render ─────────────────────────────────────────────────────────
-    function render() {
-        const filtered = getFiltered();
+    function renderSaved() {
+        const filtered = filterSaved();
+        const ss = sortState.saved;
+        const sorted = sortItems(filtered, ss.col, ss.dir);
 
-        // Sort
-        const sorted = [...filtered].sort((a, b) => {
-            let av = sortCol === 'lang' ? (a.isEnglish ? 'en' : 'non') : (a[sortCol] || '');
-            let bv = sortCol === 'lang' ? (b.isEnglish ? 'en' : 'non') : (b[sortCol] || '');
-            if (av < bv) return -1 * sortDir;
-            if (av > bv) return  1 * sortDir;
-            return 0;
-        });
+        const totalSaved = Object.values(cache).filter(d => d.saved).length;
+        rowCountSaved.textContent = `Showing ${sorted.length} of ${totalSaved} saved jobs`;
+        tbodySaved.innerHTML = '';
 
-        const total = Object.keys(langCache).length;
-        rowCount.textContent = `Showing ${sorted.length} of ${total} viewed jobs`;
-        tbody.innerHTML = '';
-
-        if (total === 0) {
-            document.getElementById('jobs-table').style.display = 'none';
-            emptyState.style.display = 'block';
-            rowCount.textContent = '';
+        if (totalSaved === 0) {
+            document.getElementById('table-saved').style.display = 'none';
+            emptySaved.style.display = 'block';
+            rowCountSaved.textContent = '';
             return;
         }
-        document.getElementById('jobs-table').style.display = '';
-        emptyState.style.display = 'none';
+        document.getElementById('table-saved').style.display = '';
+        emptySaved.style.display = 'none';
 
         sorted.forEach(function (data) {
-            const isSaved = savedJobIds.has(data.id);
             const tr = document.createElement('tr');
 
-            // Title
+            // Title (clickable)
+            const tdTitle = document.createElement('td');
+            tdTitle.innerHTML = data.link
+                ? `<a class="job-title-link" href="${data.link}" target="_blank" title="${data.title || ''}">${data.title || 'Untitled'}</a>`
+                : `<span class="job-title-link">${data.title || 'Untitled'}</span>`;
+            tr.appendChild(tdTitle);
+
+            // Location
+            const tdLoc = document.createElement('td');
+            tdLoc.innerHTML = `<span class="location-cell" title="${data.location || ''}">${data.location || '—'}</span>`;
+            tr.appendChild(tdLoc);
+
+            // Date Saved
+            const tdDate = document.createElement('td');
+            tdDate.className = 'date-cell';
+            tdDate.textContent = formatDateTime(data.dateSaved);
+            tr.appendChild(tdDate);
+
+            // Posted Date
+            const tdPosted = document.createElement('td');
+            tdPosted.className = 'date-cell';
+            tdPosted.textContent = formatPostedDate(data.postedTs, data.postedLabel);
+            tr.appendChild(tdPosted);
+
+            // Language
+            const tdLang = document.createElement('td');
+            tdLang.innerHTML = buildLangCell(data);
+            tr.appendChild(tdLang);
+
+            // Recruiter (clickable if link exists, truncated to ~30 chars)
+            const tdRec = document.createElement('td');
+            const fullName = data.recruiter || '—';
+            const shortName = fullName.length > 30 ? fullName.substring(0, 30) + '…' : fullName;
+            if (data.recruiterLink && data.recruiterLink !== 'N/A') {
+                tdRec.innerHTML = `<a class="recruiter-link" href="${data.recruiterLink}" target="_blank" title="${fullName}">${shortName}</a>`;
+            } else {
+                tdRec.innerHTML = `<span title="${fullName}">${shortName}</span>`;
+            }
+            tr.appendChild(tdRec);
+
+            // Email
+            const tdEmail = document.createElement('td');
+            if (data.email && data.email !== 'N/A') {
+                tdEmail.innerHTML = `<a class="recruiter-link email-cell" href="mailto:${data.email}" title="${data.email}">${data.email}</a>`;
+            } else {
+                tdEmail.innerHTML = '<span class="email-cell">—</span>';
+            }
+            tr.appendChild(tdEmail);
+
+            // Actions
+            const tdAct = document.createElement('td');
+            tdAct.className = 'actions-cell';
+
+            // Show Description
+            const btnDesc = document.createElement('button');
+            btnDesc.className = 'action-btn btn-desc';
+            btnDesc.innerHTML = '📄';
+            btnDesc.addEventListener('click', () => showDescription(data.title, data.description));
+            tdAct.appendChild(btnDesc);
+
+            // Remove from saved
+            const btnDel = document.createElement('button');
+            btnDel.className = 'action-btn btn-del';
+            btnDel.innerHTML = '🗑️';
+            btnDel.title = 'Remove from saved (keeps in viewed)';
+            btnDel.addEventListener('click', function () {
+                if (!confirm('Remove this job from saved? It will still appear in Viewed Jobs.')) return;
+                const entry = cache[data.id];
+                if (entry) {
+                    delete entry.saved;
+                    delete entry.email;
+                    delete entry.recruiter;
+                    delete entry.recruiterLink;
+                    delete entry.description;
+                    delete entry.dateSaved;
+                }
+                saveCache(() => {
+                    updateBadge();
+                    renderSaved();
+                    renderViewed();
+                });
+            });
+            tdAct.appendChild(btnDel);
+
+            tr.appendChild(tdAct);
+            tbodySaved.appendChild(tr);
+        });
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // VIEWED JOBS TAB
+    // ══════════════════════════════════════════════════════════════════
+    function filterViewed() {
+        const q = searchViewed.value.toLowerCase().trim();
+        const lv = langFilterViewed.value;
+        const sv = savedFilterViewed.value;
+
+        return Object.entries(cache)
+            .filter(([id, data]) => {
+                const hay = [data.title, data.location].join(' ').toLowerCase();
+                if (q && !hay.includes(q)) return false;
+                if (lv === 'en' && !data.isEnglish) return false;
+                if (lv === 'non-en' && data.isEnglish) return false;
+                if (lv === 'req' && !data.reqLang) return false;
+                if (sv === 'saved' && !data.saved) return false;
+                if (sv === 'not-saved' && data.saved) return false;
+                return true;
+            })
+            .map(([id, data]) => ({ id, ...data }));
+    }
+
+    function renderViewed() {
+        const filtered = filterViewed();
+        const sv = sortState.viewed;
+        const sorted = sortItems(filtered, sv.col, sv.dir);
+
+        const total = Object.keys(cache).length;
+        rowCountViewed.textContent = `Showing ${sorted.length} of ${total} viewed jobs`;
+        tbodyViewed.innerHTML = '';
+
+        if (total === 0) {
+            document.getElementById('table-viewed').style.display = 'none';
+            emptyViewed.style.display = 'block';
+            rowCountViewed.textContent = '';
+            return;
+        }
+        document.getElementById('table-viewed').style.display = '';
+        emptyViewed.style.display = 'none';
+
+        sorted.forEach(function (data) {
+            const tr = document.createElement('tr');
+
+            // Title (clickable)
             const tdTitle = document.createElement('td');
             tdTitle.innerHTML = data.link
                 ? `<a class="job-title-link" href="${data.link}" target="_blank" title="${data.title || ''}">${data.title || 'Job #' + data.id}</a>`
@@ -172,22 +344,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Saved?
             const tdSaved = document.createElement('td');
-            tdSaved.innerHTML = buildSavedBadge(isSaved);
+            tdSaved.innerHTML = buildSavedBadge(!!data.saved);
             tr.appendChild(tdSaved);
 
             // Actions
             const tdAct = document.createElement('td');
             tdAct.className = 'actions-cell';
-            if (data.link) {
-                const a = document.createElement('a');
-                a.href = data.link; a.target = '_blank';
-                a.className = 'action-btn btn-job';
-                a.innerHTML = '🔗 View Job';
-                tdAct.appendChild(a);
-            }
-            tr.appendChild(tdAct);
 
-            tbody.appendChild(tr);
+            // Remove completely
+            const btnDel = document.createElement('button');
+            btnDel.className = 'action-btn btn-del';
+            btnDel.innerHTML = '🗑️';
+            btnDel.title = 'Permanently remove this job from all history';
+            btnDel.addEventListener('click', function () {
+                if (!confirm('Permanently remove this job from viewed AND saved history?')) return;
+                delete cache[data.id];
+                saveCache(() => {
+                    updateBadge();
+                    renderSaved();
+                    renderViewed();
+                });
+            });
+            tdAct.appendChild(btnDel);
+
+            tr.appendChild(tdAct);
+            tbodyViewed.appendChild(tr);
         });
     }
 });
