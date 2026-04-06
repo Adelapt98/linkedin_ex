@@ -358,9 +358,125 @@ function addSaveButton() {
     }
 }
 
+function analyzeJobDescription() {
+    // Only analyze when the job details section and description is present
+    const jobDetailsContainer = document.getElementById('job-details') || document.querySelector('.jobs-description__content');
+    if (!jobDetailsContainer) return;
+    
+    // Check if we already analyzed this job by checking the current job URL
+    let currentLink = window.location.href.split('?')[0];
+    const linkElem = document.querySelector('.job-details-jobs-unified-top-card__job-title a') || document.querySelector('.jobs-unified-top-card__job-title a');
+    if (linkElem && linkElem.href) {
+        currentLink = linkElem.href.split('?')[0];
+    }
+    
+    // We can tag the container to prevent re-analyzing the same job description
+    if (jobDetailsContainer.dataset.analyzedLink === currentLink) {
+        return;
+    }
+    jobDetailsContainer.dataset.analyzedLink = currentLink;
+
+    const fullText = jobDetailsContainer.textContent || "";
+    if (fullText.length < 50) return; // Too short to analyze safely
+
+    // 1. Detect if it's English
+    const englishWords = /\b(the|and|to|of|a|in|for|is|on|that|by|this|with|i|you|it|not|or|be|are|from|at|as|your|we)\b/gi;
+    const matches = fullText.match(englishWords);
+    const wordCount = fullText.split(/\s+/).length;
+    
+    // If English stop words make up less than 15% of the word count, it's NOT English.
+    // (Pure English usually sits around 25-35%. The Finnish example provided sits at 5.4%).
+    const isEnglish = matches && (matches.length / wordCount) > 0.15;
+
+    // --- SPA CLEANUP ---
+    // LinkedIn recycles DOM elements. We must clear old highlights before analyzing the new job text.
+    const oldHighlights = jobDetailsContainer.querySelectorAll('.job-filter-highlight');
+    oldHighlights.forEach(b => {
+        b.style.color = '';
+        b.style.fontWeight = '';
+        b.style.backgroundColor = '';
+        b.style.padding = '';
+        b.style.borderRadius = '';
+        b.classList.remove('job-filter-highlight');
+    });
+
+    // 2. Discover mandatory foreign languages
+    let foundMandatoryLanguage = false;
+    
+    const langRegex = /\b(german|french|spanish|italian|dutch|swedish|norwegian|danish|finnish|polish|portuguese|russian|arabic|chinese|japanese|korean|deutsch|français|español|nederlands|svenska|norsk|suomi)\b/i;
+    const reqRegex = /\b(fluent|native|proficient|proficiency|required|mandatory|must|speak|command|b2|c1|c2|mother tongue)\b/i;
+    const optRegex = /\b(bonus|plus|advantage|nice to have|optional|preferred)\b/i;
+
+    const blocks = jobDetailsContainer.querySelectorAll('p, li, div');
+    blocks.forEach(block => {
+        // Prevent highlighting massive parent containers if they have nested paragraph/list elements
+        if (block.querySelector('p, li, ul')) return;
+        // We only want to analyze leaf nodes essentially, to prevent highlighting parent divs entirely
+        if (block.children.length > 2 && block.tagName === 'DIV') return;
+        
+        const text = block.textContent;
+        // Don't flag English itself as a foreign mandatory language since the user wants "except than english"
+        if(langRegex.test(text) && reqRegex.test(text) && !optRegex.test(text)) {
+            block.style.color = '#d32f2f'; // Red color
+            block.style.fontWeight = 'bold';
+            block.style.backgroundColor = '#ffebee';
+            block.style.padding = '2px 4px';
+            block.style.borderRadius = '4px';
+            block.classList.add('job-filter-highlight'); // Tag it so we can clean it up later!
+            foundMandatoryLanguage = true;
+        }
+    });
+
+    // 3. Inject Banner
+    let bannerContainer = document.getElementById('job-filter-lang-banner');
+    if (!bannerContainer) {
+        bannerContainer = document.createElement('div');
+        bannerContainer.id = 'job-filter-lang-banner';
+        bannerContainer.style.marginBottom = '16px';
+        bannerContainer.style.padding = '0';
+        bannerContainer.style.borderRadius = '8px';
+        bannerContainer.style.fontWeight = 'bold';
+        bannerContainer.style.display = 'flex';
+        bannerContainer.style.flexDirection = 'column';
+        bannerContainer.style.gap = '8px';
+        // Insert at the very top of the job description
+        const titleAbout = jobDetailsContainer.querySelector('.jobs-description__title') || jobDetailsContainer.firstChild;
+        jobDetailsContainer.insertBefore(bannerContainer, titleAbout);
+    }
+
+    bannerContainer.innerHTML = ''; // clear out old content
+    
+    // Primary Language Banner
+    const langPill = document.createElement('div');
+    langPill.style.padding = '8px 12px';
+    langPill.style.borderRadius = '6px';
+    langPill.style.color = '#fff';
+    
+    if (isEnglish) {
+        langPill.style.backgroundColor = '#2e7d32'; // Green
+        langPill.innerText = '✅ English Job Description';
+    } else {
+        langPill.style.backgroundColor = '#d32f2f'; // Red
+        langPill.innerText = '🌍 Non-English Job Description';
+    }
+    bannerContainer.appendChild(langPill);
+
+    // Mandatory Language Alert
+    if (foundMandatoryLanguage) {
+        const reqPill = document.createElement('div');
+        reqPill.style.padding = '8px 12px';
+        reqPill.style.borderRadius = '6px';
+        reqPill.style.color = '#fff';
+        reqPill.style.backgroundColor = '#d84315'; // Dark Orange/Red
+        reqPill.innerText = '⚠️ Mandatory Foreign Language Required (See highlighted text below)';
+        bannerContainer.appendChild(reqPill);
+    }
+}
+
 // Initial run
 hideJobs();
 addSaveButton();
+analyzeJobDescription();
 
 let debounceTimer;
 
@@ -397,6 +513,7 @@ const observer = new MutationObserver((mutations) => {
             observer.disconnect();
             hideJobs();
             addSaveButton();
+            analyzeJobDescription();
             // Reconnect the observer
             observer.observe(document.body, {
                 childList: true,
