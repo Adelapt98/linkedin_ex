@@ -146,4 +146,98 @@ document.addEventListener('DOMContentLoaded', function () {
 
     hideViewedToggle.addEventListener('change',  saveToggleAndRefresh);
     hideAppliedToggle.addEventListener('change', saveToggleAndRefresh);
+
+    // ── Export / Import ──
+    const exportBtn   = document.getElementById('export-btn');
+    const importBtn   = document.getElementById('import-btn');
+    const importFile  = document.getElementById('import-file');
+    const syncStatus  = document.getElementById('sync-status');
+
+    function showStatus(msg, isError) {
+        syncStatus.textContent = msg;
+        syncStatus.style.color = isError ? '#dc3545' : '#28a745';
+        setTimeout(() => { syncStatus.textContent = ''; }, 4000);
+    }
+
+    // Export: download entire jobLanguageCache as JSON
+    exportBtn.addEventListener('click', function () {
+        chrome.storage.local.get({ jobLanguageCache: {} }, function (result) {
+            const cache = result.jobLanguageCache || {};
+            const count = Object.keys(cache).length;
+            if (count === 0) {
+                showStatus('Nothing to export.', true);
+                return;
+            }
+
+            const json = JSON.stringify(cache, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            chrome.downloads.download({
+                url: url,
+                filename: `linkedin_job_data_${new Date().getTime()}.json`,
+                saveAs: true
+            }, function () {
+                showStatus(`✅ Exported ${count} jobs.`, false);
+            });
+        });
+    });
+
+    // Import: trigger hidden file input
+    importBtn.addEventListener('click', function () {
+        importFile.click();
+    });
+
+    importFile.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            try {
+                const incoming = JSON.parse(ev.target.result);
+
+                if (typeof incoming !== 'object' || Array.isArray(incoming)) {
+                    showStatus('❌ Invalid file format.', true);
+                    return;
+                }
+
+                const incomingCount = Object.keys(incoming).length;
+                if (incomingCount === 0) {
+                    showStatus('File is empty — nothing to import.', true);
+                    return;
+                }
+
+                // Merge: incoming entries win for same job ID, local-only entries kept
+                chrome.storage.local.get({ jobLanguageCache: {} }, function (result) {
+                    const local = result.jobLanguageCache || {};
+                    const merged = { ...local };
+
+                    let newCount = 0;
+                    let updatedCount = 0;
+
+                    Object.entries(incoming).forEach(([id, data]) => {
+                        if (!merged[id]) {
+                            newCount++;
+                        } else {
+                            updatedCount++;
+                        }
+                        // Deep-merge: spread local first, then incoming wins
+                        merged[id] = { ...(merged[id] || {}), ...data };
+                    });
+
+                    chrome.storage.local.set({ jobLanguageCache: merged }, function () {
+                        showStatus(`✅ +${newCount} new, ${updatedCount} updated.`, false);
+                        loadJobs(); // refresh saved count
+                    });
+                });
+            } catch (err) {
+                showStatus('❌ Failed to parse JSON.', true);
+            }
+        };
+        reader.readAsText(file);
+
+        // Reset so same file can be re-imported
+        importFile.value = '';
+    });
 });

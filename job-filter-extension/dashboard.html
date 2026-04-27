@@ -42,6 +42,45 @@
             border-radius: 20px;
         }
 
+        .header-right { display: flex; align-items: center; gap: 10px; }
+
+        .header-btn {
+            padding: 7px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+            color: #fff;
+        }
+        .header-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .header-btn:active { transform: translateY(0); }
+        .btn-export { background: #17a2b8; }
+        .btn-import { background: #6f42c1; }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #333;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            z-index: 2000;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         /* ── Tabs ── */
         .tabs {
             display: flex;
@@ -269,8 +308,14 @@
             <div class="header-subtitle">Your LinkedIn jobs at a glance</div>
         </div>
     </div>
-    <span class="badge" id="total-badge">0</span>
+    <div class="header-right">
+        <button class="header-btn btn-export" id="dash-export-btn">📤 Export</button>
+        <button class="header-btn btn-import" id="dash-import-btn">📥 Import</button>
+        <input type="file" id="dash-import-file" accept=".json" style="display:none">
+        <span class="badge" id="total-badge">0</span>
+    </div>
 </header>
+<div class="toast" id="toast"></div>
 
 <!-- Tabs -->
 <div class="tabs">

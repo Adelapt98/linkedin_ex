@@ -371,4 +371,91 @@ document.addEventListener('DOMContentLoaded', function () {
             tbodyViewed.appendChild(tr);
         });
     }
+
+    // ══════════════════════════════════════════════════════════════════
+    // EXPORT / IMPORT
+    // ══════════════════════════════════════════════════════════════════
+    const toastEl = document.getElementById('toast');
+    let toastTimer;
+
+    function showToast(msg) {
+        clearTimeout(toastTimer);
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        toastTimer = setTimeout(() => { toastEl.classList.remove('show'); }, 4000);
+    }
+
+    // Export
+    document.getElementById('dash-export-btn').addEventListener('click', function () {
+        const count = Object.keys(cache).length;
+        if (count === 0) {
+            showToast('Nothing to export.');
+            return;
+        }
+
+        const json = JSON.stringify(cache, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        chrome.downloads.download({
+            url: url,
+            filename: `linkedin_job_data_${new Date().getTime()}.json`,
+            saveAs: true
+        }, function () {
+            showToast(`✅ Exported ${count} jobs.`);
+        });
+    });
+
+    // Import
+    const dashImportFile = document.getElementById('dash-import-file');
+
+    document.getElementById('dash-import-btn').addEventListener('click', function () {
+        dashImportFile.click();
+    });
+
+    dashImportFile.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            try {
+                const incoming = JSON.parse(ev.target.result);
+
+                if (typeof incoming !== 'object' || Array.isArray(incoming)) {
+                    showToast('❌ Invalid file format.');
+                    return;
+                }
+
+                const incomingCount = Object.keys(incoming).length;
+                if (incomingCount === 0) {
+                    showToast('File is empty — nothing to import.');
+                    return;
+                }
+
+                let newCount = 0;
+                let updatedCount = 0;
+
+                Object.entries(incoming).forEach(([id, data]) => {
+                    if (!cache[id]) {
+                        newCount++;
+                    } else {
+                        updatedCount++;
+                    }
+                    cache[id] = { ...(cache[id] || {}), ...data };
+                });
+
+                saveCache(() => {
+                    showToast(`✅ +${newCount} new, ${updatedCount} updated.`);
+                    updateBadge();
+                    renderSaved();
+                    renderViewed();
+                });
+            } catch (err) {
+                showToast('❌ Failed to parse JSON.');
+            }
+        };
+        reader.readAsText(file);
+        dashImportFile.value = '';
+    });
 });

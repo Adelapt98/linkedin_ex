@@ -77,6 +77,47 @@
         #clear-history-btn:hover {
             background-color: #ec971f;
         }
+        .sync-section {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid #ddd;
+        }
+        .sync-section h3 {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .sync-btns {
+            display: flex;
+            gap: 8px;
+        }
+        .sync-btns button {
+            flex: 1;
+            font-size: 12px;
+            padding: 8px 6px;
+        }
+        #export-btn {
+            background-color: #17a2b8;
+            color: white;
+        }
+        #export-btn:hover {
+            background-color: #138496;
+        }
+        #import-btn {
+            background-color: #6f42c1;
+            color: white;
+        }
+        #import-btn:hover {
+            background-color: #5a32a3;
+        }
+        .sync-status {
+            font-size: 11px;
+            color: #555;
+            text-align: center;
+            margin-top: 6px;
+            min-height: 16px;
+        }
         .toggle-section {
             margin-top: 18px;
             padding-top: 14px;
@@ -145,6 +186,16 @@
         <button id="download-btn" disabled>📥 Download CSV</button>
         <button id="clear-btn" disabled>🗑️ Clear Saved Jobs</button>
         <button id="clear-history-btn">🧹 Clear Viewing History</button>
+    </div>
+
+    <div class="sync-section">
+        <h3>📡 Sync across machines</h3>
+        <div class="sync-btns">
+            <button id="export-btn">📤 Export Data</button>
+            <button id="import-btn">📥 Import Data</button>
+        </div>
+        <div class="sync-status" id="sync-status"></div>
+        <input type="file" id="import-file" accept=".json" style="display:none">
     </div>
 
     <div class="toggle-section">
