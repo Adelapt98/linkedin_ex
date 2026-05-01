@@ -292,8 +292,37 @@ function saveCurrentJob() {
         }
 
         // Extract save-only fields: description, email, recruiter, recruiterLink
-        const descriptionElem = document.querySelector('.jobs-description__content') || document.querySelector('.job-details-jobs-unified-top-card__job-description') || document.getElementById('job-details');
-        let description = descriptionElem ? descriptionElem.textContent.trim() : '';
+        const jobDetailsContainer = document.querySelector('.jobs-description__content') ||
+                                document.querySelector('.job-details-jobs-unified-top-card__job-description') ||
+                                document.getElementById('job-details');
+        if (!jobDetailsContainer) return;
+
+        const textForAnalysis = jobDetailsContainer.textContent.toLowerCase();
+
+        // 1. Check if the job description is in English
+        const isEnglish = isTextMostlyEnglish(textForAnalysis);
+
+        // 2. Check for Visa Sponsorship / EU Citizenship requirements
+        const NO_SPONSORSHIP_PATTERNS = [
+            /\bno\s+(visa\s+)?sponsorship\b/i,
+            /\bnot\s+(able|willing)\s+to\s+sponsor\b/i,
+            /\bcannot\s+sponsor\b/i,
+            /\bcan\s?not\s+provide\s+(visa\s+)?sponsorship\b/i,
+            /\bdo\s+not\s+(offer|provide)\s+(visa\s+)?sponsorship\b/i,
+            /\bdoes\s+not\s+(offer|provide)\s+(visa\s+)?sponsorship\b/i,
+            /\bwithout\s+(visa\s+)?sponsorship\b/i,
+            /\bmust\s+(be|have)\s+(legally\s+)?(authorized|eligible|entitled)\s+to\s+work\b/i,
+            /\bmust\s+have\s+(the\s+)?(legal\s+)?right\s+to\s+work\b/i,
+            /\brequire[sd]?\s+(eu|eea|european|uk|us)\s+(citizenship|residency|work\s*(permit|authorization|visa))\b/i,
+            /\b(eu|eea|european)\s+(citizen(ship)?|national(ity)?|passport)\s+(required|only|necessary|needed|must)\b/i,
+            /\bmust\s+(already\s+)?(hold|have|possess)\s+a\s+(valid\s+)?(work\s*)?(permit|visa|authorization)\b/i,
+            /\bwork\s+permit\s+(is\s+)?required\b/i,
+            /\beligib(le|ility)\s+to\s+work\s+(in\s+)?(the\s+)?(eu|eea|uk|us|europe)\b/i,
+            /\bno\s+relocation\s+(assistance|support|package)\b/i,
+        ];
+        const noSponsorship = NO_SPONSORSHIP_PATTERNS.some(p => p.test(textForAnalysis));
+
+        let description = jobDetailsContainer.textContent.trim();
 
         // Remove text injected by our extension so it doesn't pollute the CSV
         description = description
@@ -563,6 +592,17 @@ function analyzeJobDescription() {
         bannerContainer.appendChild(reqPill);
     }
 
+    // No Sponsorship Alert
+    if (noSponsorship) {
+        const noSponsorPill = document.createElement('div');
+        noSponsorPill.style.padding = '8px 12px';
+        noSponsorPill.style.borderRadius = '6px';
+        noSponsorPill.style.color = '#fff';
+        noSponsorPill.style.backgroundColor = '#b71c1c'; // Dark Red
+        noSponsorPill.innerText = '🚫 No Visa Sponsorship / Must have existing work permit';
+        bannerContainer.appendChild(noSponsorPill);
+    }
+
     // --- SAVE TO PERSISTENT CACHE ---
     const matchId = currentLink.match(/\/jobs\/view\/(\d+)/) || currentLink.match(/currentJobId=(\d+)/);
     const jobId = matchId ? matchId[1] : null;
@@ -588,6 +628,7 @@ function analyzeJobDescription() {
             cache[jobId] = {
                 isEnglish: isEnglish,
                 reqLang: foundMandatoryLanguage,
+                noSponsorship: noSponsorship,
                 title: viewedTitle,
                 link: currentLink,
                 location: viewedLocation,
@@ -606,6 +647,12 @@ function analyzeJobDescription() {
             });
 
             chrome.storage.local.set({ jobLanguageCache: cache });
+
+            // Update in-memory cache immediately
+            inMemoryLangCache[jobId] = cache[jobId];
+
+            // Re-inject left pane labels for this specific job instantly
+            injectListLabels();
         });
     }
 }
@@ -665,6 +712,29 @@ function injectListLabels() {
                 req.style.fontWeight = 'bold';
                 req.innerText = '[Req. Lang]';
                 labelContainer.appendChild(req);
+            }
+
+            if (data.noSponsorship) {
+                const noSponsorBadge = document.createElement('span');
+                noSponsorBadge.style.backgroundColor = '#b71c1c';
+                noSponsorBadge.style.color = '#fff';
+                noSponsorBadge.style.padding = '2px 6px';
+                noSponsorBadge.style.borderRadius = '4px';
+                noSponsorBadge.style.fontSize = '12px';
+                noSponsorBadge.style.fontWeight = 'bold';
+                noSponsorBadge.innerText = '[No Visa]';
+                noSponsorBadge.title = 'No visa sponsorship provided or requires EU citizenship';
+                labelContainer.appendChild(noSponsorBadge);
+
+                // Make the card completely red if no sponsorship
+                card.style.backgroundColor = '#ffebee';
+                const listItem = card.closest('li.scaffold-layout__list-item') || card.parentElement;
+                if (listItem) listItem.style.backgroundColor = '#ffebee';
+            } else if (data.isEnglish && !data.reqLang) {
+                // If it's a good job (English, no req lang, has sponsorship), make it light green
+                card.style.backgroundColor = '#e8f5e9';
+                const listItem = card.closest('li.scaffold-layout__list-item') || card.parentElement;
+                if (listItem) listItem.style.backgroundColor = '#e8f5e9';
             }
 
             wrapper.appendChild(labelContainer);
