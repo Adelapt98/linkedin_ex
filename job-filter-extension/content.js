@@ -297,31 +297,6 @@ function saveCurrentJob() {
                                 document.getElementById('job-details');
         if (!jobDetailsContainer) return;
 
-        const textForAnalysis = jobDetailsContainer.textContent.toLowerCase();
-
-        // 1. Check if the job description is in English
-        const isEnglish = isTextMostlyEnglish(textForAnalysis);
-
-        // 2. Check for Visa Sponsorship / EU Citizenship requirements
-        const NO_SPONSORSHIP_PATTERNS = [
-            /\bno\s+(visa\s+)?sponsorship\b/i,
-            /\bnot\s+(able|willing)\s+to\s+sponsor\b/i,
-            /\bcannot\s+sponsor\b/i,
-            /\bcan\s?not\s+provide\s+(visa\s+)?sponsorship\b/i,
-            /\bdo\s+not\s+(offer|provide)\s+(visa\s+)?sponsorship\b/i,
-            /\bdoes\s+not\s+(offer|provide)\s+(visa\s+)?sponsorship\b/i,
-            /\bwithout\s+(visa\s+)?sponsorship\b/i,
-            /\bmust\s+(be|have)\s+(legally\s+)?(authorized|eligible|entitled)\s+to\s+work\b/i,
-            /\bmust\s+have\s+(the\s+)?(legal\s+)?right\s+to\s+work\b/i,
-            /\brequire[sd]?\s+(eu|eea|european|uk|us)\s+(citizenship|residency|work\s*(permit|authorization|visa))\b/i,
-            /\b(eu|eea|european)\s+(citizen(ship)?|national(ity)?|passport)\s+(required|only|necessary|needed|must)\b/i,
-            /\bmust\s+(already\s+)?(hold|have|possess)\s+a\s+(valid\s+)?(work\s*)?(permit|visa|authorization)\b/i,
-            /\bwork\s+permit\s+(is\s+)?required\b/i,
-            /\beligib(le|ility)\s+to\s+work\s+(in\s+)?(the\s+)?(eu|eea|uk|us|europe)\b/i,
-            /\bno\s+relocation\s+(assistance|support|package)\b/i,
-        ];
-        const noSponsorship = NO_SPONSORSHIP_PATTERNS.some(p => p.test(textForAnalysis));
-
         let description = jobDetailsContainer.textContent.trim();
 
         // Remove text injected by our extension so it doesn't pollute the CSV
@@ -507,6 +482,27 @@ function analyzeJobDescription() {
     // If English stop words make up less than 15% of the word count, it's NOT English.
     // (Pure English usually sits around 25-35%. The Finnish example provided sits at 5.4%).
     const isEnglish = matches && (matches.length / wordCount) > 0.15;
+
+    // 1.5 Check for Visa Sponsorship / EU Citizenship requirements
+    const textForAnalysis = fullText.toLowerCase();
+    const NO_SPONSORSHIP_PATTERNS = [
+        /\bno\s+(visa\s+)?sponsorship\b/i,
+        /\bnot\s+(able|willing)\s+to\s+sponsor\b/i,
+        /\bcannot\s+sponsor\b/i,
+        /\bcan\s?not\s+provide\s+(visa\s+)?sponsorship\b/i,
+        /\bdo\s+not\s+(offer|provide)\s+(visa\s+)?sponsorship\b/i,
+        /\bdoes\s+not\s+(offer|provide)\s+(visa\s+)?sponsorship\b/i,
+        /\bwithout\s+(visa\s+)?sponsorship\b/i,
+        /\bmust\s+(be|have)\s+(legally\s+)?(authorized|eligible|entitled)\s+to\s+work\b/i,
+        /\bmust\s+have\s+(the\s+)?(legal\s+)?right\s+to\s+work\b/i,
+        /\brequire[sd]?\s+(eu|eea|european|uk|us)\s+(citizenship|residency|work\s*(permit|authorization|visa))\b/i,
+        /\b(eu|eea|european)\s+(citizen(ship)?|national(ity)?|passport)\s+(required|only|necessary|needed|must)\b/i,
+        /\bmust\s+(already\s+)?(hold|have|possess)\s+a\s+(valid\s+)?(work\s*)?(permit|visa|authorization)\b/i,
+        /\bwork\s+permit\s+(is\s+)?required\b/i,
+        /\beligib(le|ility)\s+to\s+work\s+(in\s+)?(the\s+)?(eu|eea|uk|us|europe)\b/i,
+        /\bno\s+relocation\s+(assistance|support|package)\b/i,
+    ];
+    const noSponsorship = NO_SPONSORSHIP_PATTERNS.some(p => p.test(textForAnalysis));
 
     // --- SPA CLEANUP ---
     // LinkedIn recycles DOM elements. We must clear old highlights before analyzing the new job text.
