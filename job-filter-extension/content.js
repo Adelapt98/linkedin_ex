@@ -523,18 +523,20 @@ function analyzeJobDescription() {
     const reqRegex = /\b(fluent|native|proficient|proficiency|required|mandatory|must|speak|command|b2|c1|c2|mother tongue)\b/i;
     const optRegex = /\b(bonus|plus|advantage|nice to have|optional|preferred)\b/i;
 
-    // Check Job Title first - if a language is in the title, it's almost always mandatory
+    // Check Job Title first
     const titleElem = document.querySelector('.job-details-jobs-unified-top-card__job-title') || document.querySelector('.jobs-unified-top-card__job-title');
-    const jobTitleText = titleElem ? titleElem.textContent : '';
-    if (langRegex.test(jobTitleText)) {
-        foundMandatoryLanguage = true;
+    if (titleElem) {
+        const titleText = titleElem.textContent;
+        if (langRegex.test(titleText) && reqRegex.test(titleText) && !optRegex.test(titleText)) {
+            foundMandatoryLanguage = true;
+            titleElem.style.color = '#d32f2f'; // Highlight the title in red
+        }
     }
 
-    // Check blocks for highlighting
-    const blocks = jobDetailsContainer.querySelectorAll('p, li, div, strong, span');
+    const blocks = jobDetailsContainer.querySelectorAll('p, li, div');
     blocks.forEach(block => {
         // Prevent highlighting massive parent containers if they have nested paragraph/list elements
-        if (block.tagName === 'DIV' && block.querySelector('p, li, ul')) return;
+        if (block.querySelector('p, li, ul')) return;
         // We only want to analyze leaf nodes essentially, to prevent highlighting parent divs entirely
         if (block.children.length > 2 && block.tagName === 'DIV') return;
 
@@ -550,15 +552,6 @@ function analyzeJobDescription() {
             foundMandatoryLanguage = true;
         }
     });
-
-    // Fallback: If it wasn't caught by block traversal (e.g. weird DOM structure), do a proximity regex on the full text
-    if (!foundMandatoryLanguage) {
-        // Look for "fluent in dutch", "dutch required", etc within ~30 characters of each other
-        const proximityRegex = new RegExp(`(?:${reqRegex.source}.{0,30}${langRegex.source})|(?:${langRegex.source}.{0,30}${reqRegex.source})`, 'i');
-        if (proximityRegex.test(fullText)) {
-            foundMandatoryLanguage = true;
-        }
-    }
 
     // 3. Inject Banner
     let bannerContainer = document.getElementById('job-filter-lang-banner');
