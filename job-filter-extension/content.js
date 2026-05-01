@@ -186,6 +186,13 @@ function extractJobInfo() {
 
     let location = 'N/A';
     let timeAgo = null;
+    let companyName = 'Unknown Company';
+
+    // Extract Company Name
+    const companyElem = document.querySelector('.job-details-jobs-unified-top-card__company-name') || document.querySelector('.jobs-unified-top-card__company-name');
+    if (companyElem) {
+        companyName = companyElem.textContent.replace(/\s+/g, ' ').trim();
+    }
 
     if (container) {
         const raw = container.textContent.replace(/\s+/g, ' ').trim();
@@ -209,7 +216,7 @@ function extractJobInfo() {
             location = rest[0];
         }
     }
-    return { location, timeAgo };
+    return { location, timeAgo, companyName };
 }
 
 
@@ -303,7 +310,8 @@ function saveCurrentJob() {
         description = description
             .replace('✅ English Job Description', '')
             .replace('🌍 Non-English Job Description', '')
-            .replace('⚠️ Mandatory Foreign Language Required (See highlighted text below)', '');
+            .replace('⚠️ Mandatory Foreign Language Required (See highlighted text below)', '')
+            .replace('🚫 No Visa Sponsorship / Must have existing work permit', '');
 
         const recruiterElem = document.querySelector('.hirer-card__hirer-information') || document.querySelector('.jobs-poster') || document.querySelector('.job-details-jobs-unified-top-card__hirer-profile-link');
         const recruiter = recruiterElem ? recruiterElem.textContent.replace(/\s+/g, ' ').trim() : 'N/A';
@@ -465,11 +473,11 @@ function analyzeJobDescription() {
         currentLink = linkElem.href.split('?')[0];
     }
 
-    // We can tag the container to prevent re-analyzing the same job description
-    if (jobDetailsContainer.dataset.analyzedLink === currentLink) {
-        return;
-    }
-    jobDetailsContainer.dataset.analyzedLink = currentLink;
+    // --- DOM CLEANUP BEFORE ANALYSIS ---
+    // Remove old banner BEFORE extracting text, otherwise our own injected 'No Visa Sponsorship' 
+    // text from the previous job will trigger false positives in the next job!
+    const oldBanner = document.getElementById('job-filter-lang-banner');
+    if (oldBanner) oldBanner.remove();
 
     const fullText = jobDetailsContainer.textContent || "";
     if (fullText.length < 50) return; // Too short to analyze safely
@@ -487,11 +495,9 @@ function analyzeJobDescription() {
     const textForAnalysis = fullText.toLowerCase();
     const NO_SPONSORSHIP_PATTERNS = [
         /\bno\s+(visa\s+)?sponsorship\b/i,
-        /\bnot\s+(able|willing)\s+to\s+sponsor\b/i,
+        /\b(not\s+(able|willing|providing|provide)|unable)\s+(to\s+)?(offer\s+|provide\s+)?(sponsor|visa|sponsorship)\b/i,
         /\bcannot\s+sponsor\b/i,
-        /\bcan\s?not\s+provide\s+(visa\s+)?sponsorship\b/i,
-        /\bdo\s+not\s+(offer|provide)\s+(visa\s+)?sponsorship\b/i,
-        /\bdoes\s+not\s+(offer|provide)\s+(visa\s+)?sponsorship\b/i,
+        /\b(can\s?not|cannot|can't|do\s+not|don't)\s+(provide|offer|support|sponsor)\s+(visa|sponsorship)?\b/i,
         /\bwithout\s+(visa\s+)?sponsorship\b/i,
         /\bmust\s+(be|have)\s+(legally\s+)?(authorized|eligible|entitled)\s+to\s+work\b/i,
         /\bmust\s+have\s+(the\s+)?(legal\s+)?right\s+to\s+work\b/i,
@@ -501,6 +507,7 @@ function analyzeJobDescription() {
         /\bwork\s+permit\s+(is\s+)?required\b/i,
         /\beligib(le|ility)\s+to\s+work\s+(in\s+)?(the\s+)?(eu|eea|uk|us|europe)\b/i,
         /\bno\s+relocation\s+(assistance|support|package)\b/i,
+        /\bgeen\s+(visumsponsoring|kennismigrantenregeling)\b/i, // Dutch
     ];
     const noSponsorship = NO_SPONSORSHIP_PATTERNS.some(p => p.test(textForAnalysis));
 
@@ -541,7 +548,8 @@ function analyzeJobDescription() {
         if (block.children.length > 2 && block.tagName === 'DIV') return;
 
         const text = block.textContent;
-        // Don't flag English itself as a foreign mandatory language since the user wants "except than english"
+        
+        // 1. Highlight Language Requirements (Red)
         if (langRegex.test(text) && reqRegex.test(text) && !optRegex.test(text)) {
             block.style.color = '#d32f2f'; // Red color
             block.style.fontWeight = 'bold';
@@ -551,26 +559,31 @@ function analyzeJobDescription() {
             block.classList.add('job-filter-highlight'); // Tag it so we can clean it up later!
             foundMandatoryLanguage = true;
         }
+
+        // 2. Highlight Visa/Sponsorship Requirements (Orange)
+        if (NO_SPONSORSHIP_PATTERNS.some(p => p.test(text))) {
+            block.style.color = '#e65100'; // Dark Orange color
+            block.style.fontWeight = 'bold';
+            block.style.backgroundColor = '#fff3e0'; // Light Orange background
+            block.style.padding = '2px 4px';
+            block.style.borderRadius = '4px';
+            block.classList.add('job-filter-highlight');
+        }
     });
 
     // 3. Inject Banner
-    let bannerContainer = document.getElementById('job-filter-lang-banner');
-    if (!bannerContainer) {
-        bannerContainer = document.createElement('div');
-        bannerContainer.id = 'job-filter-lang-banner';
-        bannerContainer.style.marginBottom = '16px';
-        bannerContainer.style.padding = '0';
-        bannerContainer.style.borderRadius = '8px';
-        bannerContainer.style.fontWeight = 'bold';
-        bannerContainer.style.display = 'flex';
-        bannerContainer.style.flexDirection = 'column';
-        bannerContainer.style.gap = '8px';
-        // Insert at the very top of the job description
-        const titleAbout = jobDetailsContainer.querySelector('.jobs-description__title') || jobDetailsContainer.firstChild;
-        jobDetailsContainer.insertBefore(bannerContainer, titleAbout);
-    }
-
-    bannerContainer.innerHTML = ''; // clear out old content
+    let bannerContainer = document.createElement('div');
+    bannerContainer.id = 'job-filter-lang-banner';
+    bannerContainer.style.marginBottom = '16px';
+    bannerContainer.style.padding = '0';
+    bannerContainer.style.borderRadius = '8px';
+    bannerContainer.style.fontWeight = 'bold';
+    bannerContainer.style.display = 'flex';
+    bannerContainer.style.flexDirection = 'column';
+    bannerContainer.style.gap = '8px';
+    // Insert at the very top of the job description
+    const titleAbout = jobDetailsContainer.querySelector('.jobs-description__title') || jobDetailsContainer.firstChild;
+    jobDetailsContainer.insertBefore(bannerContainer, titleAbout);
 
     // Primary Language Banner
     const langPill = document.createElement('div');
@@ -619,6 +632,7 @@ function analyzeJobDescription() {
         const viewedTitle = viewedTitleElem ? viewedTitleElem.textContent.replace('📥 Save Job', '').replace('✅ Saved!', '').replace(/\s+/g, ' ').trim() : 'Unknown Title';
         const viewedInfo = extractJobInfo();
         const viewedLocation = viewedInfo.location;
+        const viewedCompanyName = viewedInfo.companyName;
         const viewedPostedTs = approxPostedTs(viewedInfo.timeAgo);
         const viewedPostedLabel = viewedInfo.timeAgo && /^reposted/i.test(viewedInfo.timeAgo) ? 'Reposted' : 'Posted';
 
@@ -636,6 +650,7 @@ function analyzeJobDescription() {
                 reqLang: foundMandatoryLanguage,
                 noSponsorship: noSponsorship,
                 title: viewedTitle,
+                companyName: viewedCompanyName,
                 link: currentLink,
                 location: viewedLocation,
                 postedTs: viewedPostedTs,
@@ -733,14 +748,14 @@ function injectListLabels() {
                 labelContainer.appendChild(noSponsorBadge);
 
                 // Make the card completely red if no sponsorship
-                card.style.backgroundColor = '#ffebee';
+                card.style.setProperty('background-color', '#ffebee', 'important');
                 const listItem = card.closest('li.scaffold-layout__list-item') || card.parentElement;
-                if (listItem) listItem.style.backgroundColor = '#ffebee';
+                if (listItem) listItem.style.setProperty('background-color', '#ffebee', 'important');
             } else if (data.isEnglish && !data.reqLang) {
                 // If it's a good job (English, no req lang, has sponsorship), make it light green
-                card.style.backgroundColor = '#e8f5e9';
+                card.style.setProperty('background-color', '#e8f5e9', 'important');
                 const listItem = card.closest('li.scaffold-layout__list-item') || card.parentElement;
-                if (listItem) listItem.style.backgroundColor = '#e8f5e9';
+                if (listItem) listItem.style.setProperty('background-color', '#e8f5e9', 'important');
             }
 
             wrapper.appendChild(labelContainer);

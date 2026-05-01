@@ -188,6 +188,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 : `<span class="job-title-link">${data.title || 'Untitled'}</span>`;
             tr.appendChild(tdTitle);
 
+            // Company Name
+            const tdCompany = document.createElement('td');
+            tdCompany.innerHTML = `<span title="${data.companyName || ''}">${data.companyName || '—'}</span>`;
+            tr.appendChild(tdCompany);
+
             // Location
             const tdLoc = document.createElement('td');
             tdLoc.innerHTML = `<span class="location-cell" title="${data.location || ''}">${data.location || '—'}</span>`;
@@ -319,6 +324,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? `<a class="job-title-link" href="${data.link}" target="_blank" title="${data.title || ''}">${data.title || 'Job #' + data.id}</a>`
                 : `<span class="job-title-link">${data.title || 'Job #' + data.id}</span>`;
             tr.appendChild(tdTitle);
+
+            // Company Name
+            const tdCompany = document.createElement('td');
+            tdCompany.innerHTML = `<span title="${data.companyName || ''}">${data.companyName || '—'}</span>`;
+            tr.appendChild(tdCompany);
 
             // Location
             const tdLoc = document.createElement('td');
