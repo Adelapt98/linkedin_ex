@@ -108,6 +108,9 @@ const countriesToRemove = [
 
     // Spain
     "Spain", "Madrid", "Barcelona", "Valencia", "Seville", "Zaragoza", "Malaga", "Murcia", "Palma", "Catalonia", "Andalusia", "Galicia", "Basque Country", "Bilbao"
+
+    // ,"United Kingdom"
+    , "England", "London", "Manchester", "Birmingham", "Liverpool", "Leeds", "Sheffield", "Bristol", "Newcastle"
 ];
 
 let inMemoryLangCache = {};
@@ -249,7 +252,7 @@ function hideJobs() {
 
     // Read toggle settings from storage (cached, refreshed each call)
     chrome.storage.local.get({ hideViewed: false, hideApplied: false }, function (settings) {
-        const hideViewed  = settings.hideViewed;
+        const hideViewed = settings.hideViewed;
         const hideApplied = settings.hideApplied;
 
         jobItems.forEach(item => {
@@ -261,7 +264,7 @@ function hideJobs() {
                 const footerElem = item.querySelector('.job-card-container__footer-job-state');
                 if (footerElem) {
                     const footerText = footerElem.textContent.trim().toLowerCase();
-                    if (hideViewed  && footerText === 'viewed')  shouldHide = true;
+                    if (hideViewed && footerText === 'viewed') shouldHide = true;
                     if (hideApplied && footerText === 'applied') shouldHide = true;
                 }
             }
@@ -300,8 +303,8 @@ function saveCurrentJob() {
 
         // Extract save-only fields: description, email, recruiter, recruiterLink
         const jobDetailsContainer = document.querySelector('.jobs-description__content') ||
-                                document.querySelector('.job-details-jobs-unified-top-card__job-description') ||
-                                document.getElementById('job-details');
+            document.querySelector('.job-details-jobs-unified-top-card__job-description') ||
+            document.getElementById('job-details');
         if (!jobDetailsContainer) return;
 
         let description = jobDetailsContainer.textContent.trim();
@@ -548,7 +551,7 @@ function analyzeJobDescription() {
         if (block.children.length > 2 && block.tagName === 'DIV') return;
 
         const text = block.textContent;
-        
+
         // 1. Highlight Language Requirements (Red)
         if (langRegex.test(text) && reqRegex.test(text) && !optRegex.test(text)) {
             block.style.color = '#d32f2f'; // Red color
