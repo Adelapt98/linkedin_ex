@@ -1,34 +1,96 @@
 (function () {
     'use strict';
     const countriesToRemove = [
-        "Lithuania","Vilnius","Kaunas","Klaipeda","Siauliai","Panevezys",
+        // Lithuania
+        "Lithuania","Vilnius","Kaunas","Klaipeda","Siauliai","Panevezys","Alytus","Marijampole","Utena",
+        // Romania
         "Romania","Bucharest","Cluj","Cluj-Napoca","Timisoara","Iasi","Constanta","Brasov","Transylvania",
-        "France","Paris","Marseille","Lyon","Toulouse","Nice","Nantes","Strasbourg","Montpellier","Bordeaux","Lille","Ile-de-France",
+        "Craiova","Galati","Sibiu","Oradea","Arad","Targu Mures","Ploiesti","Pitesti","Bacau",
+        // France
+        "France","Paris","Marseille","Lyon","Toulouse","Nice","Nantes","Strasbourg","Montpellier",
+        "Bordeaux","Lille","Rennes","Reims","Toulon","Grenoble","Dijon","Angers","Nimes","Aix-en-Provence",
+        "Saint-Etienne","Brest","Le Havre","Clermont-Ferrand","Tours","Amiens","Metz","Perpignan","Besancon",
+        "Orleans","Rouen","Mulhouse","Caen","Nancy","Argenteuil","Montreuil","Saint-Denis","Roubaix",
+        "Avignon","Poitiers","Versailles","La Rochelle","Pau","Calais","Cannes","Antibes",
+        "Levallois-Perret","Levallois","Issy-les-Moulineaux","Neuilly-sur-Seine","Courbevoie","La Defense",
+        "Boulogne-Billancourt","Saint-Ouen","St.-Ouen","Clichy","Puteaux","Rueil-Malmaison","Suresnes",
+        "Ile-de-France","\u00cele-de-France","Hauts-de-Seine","Seine-Saint-Denis","Val-de-Marne",
+        "Hauts-de-France","Auvergne-Rh\u00f4ne-Alpes","Nouvelle-Aquitaine","Occitanie","Grand Est",
+        "Provence-Alpes-C\u00f4te d'Azur","Pays de la Loire","Normandie","Bretagne","Bourgogne-Franche-Comt\u00e9",
+        "Centre-Val de Loire","Corse",
+        // Ukraine
         "Ukraine","Kyiv","Kiev","Kharkiv","Odesa","Odessa","Dnipro","Lviv","Zaporizhzhia","Donetsk",
-        "Italy","Rome","Milan","Naples","Turin","Palermo","Genoa","Bologna","Florence","Venice","Lombardy","Lazio","Campania",
-        "Poland","Warsaw","Krakow","Cracow","Lodz","Wroclaw","Poznan","Gdansk","Szczecin","Bydgoszcz","Lublin","Silesia","Pomerania",
+        "Vinnytsia","Mykolaiv","Poltava","Chernihiv","Zhytomyr","Sumy","Rivne","Ivano-Frankivsk",
+        // Italy
+        "Italy","Rome","Milan","Naples","Turin","Palermo","Genoa","Bologna","Florence","Venice",
+        "Lombardy","Lazio","Campania","Verona","Catania","Bari","Padua","Trieste","Brescia","Parma",
+        "Modena","Reggio Emilia","Perugia","Cagliari","Livorno","Ravenna","Ferrara","Rimini","Bergamo",
+        "Piedmont","Tuscany","Veneto","Emilia-Romagna","Puglia","Sicily","Sardinia","Calabria","Liguria",
+        "Friuli Venezia Giulia","Trentino-Alto Adige","Umbria","Marche","Abruzzo","Basilicata","Molise",
+        // Poland
+        "Poland","Warsaw","Krakow","Cracow","Lodz","Wroclaw","Poznan","Gdansk","Szczecin",
+        "Bydgoszcz","Lublin","Silesia","Pomerania","Katowice","Bialystok","Gdynia","Czestochowa",
+        "Radom","Sosnowiec","Torun","Kielce","Rzeszow","Gliwice","Zabrze","Olsztyn","Opole",
+        "Masovia","Greater Poland","Lower Silesia","Lesser Poland","Mazovia",
+        // Portugal
         "Portugal","Lisbon","Porto","Amadora","Braga","Algarve","Madeira","Azores","Coimbra",
-        "Estonia","Tallinn","Tartu","Narva","Parnu",
-        "Bulgaria","Sofia","Plovdiv","Varna","Burgas","Ruse",
-        "Latvia","Riga","Daugavpils","Liepaja","Jelgava",
-        "Slovakia","Bratislava","Kosice","Presov","Zilina",
-        "Slovenia","Ljubljana","Maribor","Celje","Kranj",
-        "Hungary","Budapest","Debrecen","Szeged","Miskolc","Pecs","Gyor",
-        "Croatia","Zagreb","Split","Rijeka","Osijek","Zadar","Dalmatia",
+        "Funchal","Setubal","Aveiro","Viseu","Faro","Leiria","Evora","Guimaraes",
+        // Estonia
+        "Estonia","Tallinn","Tartu","Narva","Parnu","Harju County",
+        // Bulgaria
+        "Bulgaria","Sofia","Plovdiv","Varna","Burgas","Ruse","Stara Zagora","Pleven","Dobrich",
+        // Latvia
+        "Latvia","Riga","Daugavpils","Liepaja","Jelgava","Jurmala","Ventspils",
+        // Slovakia
+        "Slovakia","Bratislava","Kosice","Presov","Zilina","Banska Bystrica","Nitra","Trnava","Trencin",
+        // Slovenia
+        "Slovenia","Ljubljana","Maribor","Celje","Kranj","Koper","Novo Mesto",
+        // Hungary
+        "Hungary","Budapest","Debrecen","Szeged","Miskolc","Pecs","Gyor","Nyiregyhaza","Kecskemet",
+        "Szekesfehervar","Szombathely","Veszprem",
+        // Croatia
+        "Croatia","Zagreb","Split","Rijeka","Osijek","Zadar","Dalmatia","Slavonia","Istria","Dubrovnik","Pula",
+        // Greece
         "Greece","Athens","Thessaloniki","Patras","Heraklion","Crete","Peloponnese","Larissa",
-        "Cyprus","Nicosia","Limassol","Larnaca","Paphos",
-        "Malta","Valletta","Birkirkara","Mosta","Sliema",
+        "Volos","Ioannina","Kavala","Rhodes","Corfu","Attica","Central Macedonia",
+        // Cyprus
+        "Cyprus","Nicosia","Limassol","Larnaca","Paphos","Famagusta","Kyrenia",
+        // Malta
+        "Malta","Valletta","Birkirkara","Mosta","Sliema","St Julian","St. Julian","Gzira","Msida",
+        // Belarus
         "Belarus","Minsk","Gomel","Vitebsk","Mogilev","Grodno","Brest",
+        // Moldova
         "Moldova","Chisinau","Tiraspol","Balti","Bender",
-        "Serbia","Belgrade","Novi Sad","Nis","Kragujevac","Vojvodina",
+        // Serbia
+        "Serbia","Belgrade","Novi Sad","Nis","Kragujevac","Vojvodina","Subotica",
+        // Bosnia and Herzegovina
         "Bosnia","Bosnia and Herzegovina","Sarajevo","Banja Luka","Tuzla","Zenica","Mostar",
-        "Albania","Tirana","Durres","Vlore","Elbasan","Shkoder",
-        "Montenegro","Podgorica","Niksic","Budva","Kotor",
-        "North Macedonia","Skopje","Bitola","Kumanovo","Prilep",
-        "Kosovo","Pristina","Prizren","Ferizaj","Peja",
+        // Albania
+        "Albania","Tirana","Durres","Vlore","Elbasan","Shkoder","Fier","Korce",
+        // Montenegro
+        "Montenegro","Podgorica","Niksic","Budva","Kotor","Herceg Novi","Bar",
+        // North Macedonia
+        "North Macedonia","Skopje","Bitola","Kumanovo","Prilep","Tetovo","Ohrid",
+        // Kosovo
+        "Kosovo","Pristina","Prizren","Ferizaj","Peja","Mitrovica","Gjakova",
+        // Czech Republic / Czechia
         "Czechia","Czech Republic","Prague","Brno","Ostrava","Plzen","Liberec","Olomouc","Bohemia","Moravia",
-        "Spain","Madrid","Barcelona","Valencia","Seville","Zaragoza","Malaga","Murcia","Palma","Catalonia","Andalusia","Galicia","Basque Country","Bilbao",
+        "Hradec Kralove","Ceske Budejovice","Usti nad Labem","Pardubice","Zlin","Karlovy Vary",
+        // Spain
+        "Spain","Madrid","Barcelona","Valencia","Seville","Zaragoza","Malaga","Murcia","Palma",
+        "Catalonia","Andalusia","Galicia","Basque Country","Bilbao","Las Palmas","Alicante","Cordoba",
+        "Valladolid","Vigo","Gijon","Hospitalet","Vitoria","Granada","A Coruna","Elche","Oviedo",
+        "Santander","Pamplona","San Sebastian","Donostia","Castellon","Burgos","Salamanca","Albacete",
+        "Community of Madrid","Comunidad de Madrid","Comunitat Valenciana","Castilla y Leon","Castilla-La Mancha",
+        "Aragon","Canary Islands","Balearic Islands","Extremadura","Asturias","Navarra","Cantabria","La Rioja",
+        // UK
         "England","London","Manchester","Birmingham","Liverpool","Leeds","Sheffield","Bristol","Newcastle",
+        "Nottingham","Leicester","Coventry","Bradford","Cardiff","Belfast","Edinburgh","Glasgow","Aberdeen",
+        "Southampton","Portsmouth","Plymouth","Reading","Milton Keynes","Northampton","Swindon","Bournemouth",
+        "Cambridge","Oxford","York","Derby","Stoke-on-Trent","Wolverhampton","Middlesbrough",
+        "Greater London","Greater Manchester","West Midlands","South East England","South West England",
+        "East Midlands","West Yorkshire","North West England","East of England","Scotland","Wales",
+        "Northern Ireland",
     ];
     const countriesLower = countriesToRemove.map(c => c.toLowerCase());
 
