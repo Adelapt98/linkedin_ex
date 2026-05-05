@@ -344,7 +344,31 @@ function saveCurrentJob() {
             const cache = result.jobLanguageCache || {};
             const existing = cache[jobId] || {};
 
+            // If this job wasn't previously analyzed (e.g. blocked country),
+            // gather all metadata now so the saved entry is complete
+            let metadata = {};
+            if (!existing.title || existing.title === 'Unknown Title') {
+                const titleElem = document.querySelector('.job-details-jobs-unified-top-card__job-title') || document.querySelector('.jobs-unified-top-card__job-title');
+                const title = titleElem ? titleElem.textContent.replace('📥 Save Job', '').replace('✅ Saved!', '').replace(/\s+/g, ' ').trim() : 'Unknown Title';
+                const info = extractJobInfo();
+                const fullText = description;
+                const engWords = fullText.match(/\b(the|and|to|of|a|in|for|is|on|that|by|this|with|i|you|it|not|or|be|are|from|at|as|your|we)\b/gi);
+                const wordCount = fullText.split(/\s+/).length;
+                const isEnglish = engWords && (engWords.length / wordCount) > 0.15;
+                metadata = {
+                    title: title,
+                    companyName: info.companyName,
+                    location: info.location,
+                    link: rawLink.endsWith('/') ? rawLink : rawLink + '/',
+                    isEnglish: isEnglish,
+                    postedTs: approxPostedTs(info.timeAgo),
+                    postedLabel: info.timeAgo && /^reposted/i.test(info.timeAgo) ? 'Reposted' : 'Posted',
+                    ts: Date.now()
+                };
+            }
+
             cache[jobId] = {
+                ...metadata,
                 ...existing,
                 saved: true,
                 email: email,

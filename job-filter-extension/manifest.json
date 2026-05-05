@@ -15,7 +15,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["dashboard.html", "dashboard.js", "icons/*"],
+      "resources": ["dashboard.html", "dashboard.js", "ai_search_page.js", "icons/*"],
       "matches": ["<all_urls>"]
     }
   ],
@@ -35,6 +35,19 @@
       ],
       "js": [
         "content.js"
+      ],
+      "exclude_matches": [
+        "*://*.linkedin.com/jobs/search-results/*",
+        "*://linkedin.com/jobs/search-results/*"
+      ]
+    },
+    {
+      "matches": [
+        "*://*.linkedin.com/jobs/search-results/*",
+        "*://linkedin.com/jobs/search-results/*"
+      ],
+      "js": [
+        "ai_search_page.js"
       ]
     }
   ]
