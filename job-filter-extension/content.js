@@ -137,14 +137,14 @@ const countriesToRemove = [
     "Community of Madrid", "Comunidad de Madrid", "Comunitat Valenciana", "Castilla y Leon", "Castilla-La Mancha",
     "Aragon", "Canary Islands", "Balearic Islands", "Extremadura", "Asturias", "Navarra", "Cantabria", "La Rioja"
 
-    // ,\"United Kingdom\"
-    , "England", "London", "Manchester", "Birmingham", "Liverpool", "Leeds", "Sheffield", "Bristol", "Newcastle",
-    "Nottingham", "Leicester", "Coventry", "Bradford", "Cardiff", "Belfast", "Edinburgh", "Glasgow", "Aberdeen",
-    "Southampton", "Portsmouth", "Plymouth", "Reading", "Milton Keynes", "Northampton", "Swindon", "Bournemouth",
-    "Cambridge", "Oxford", "York", "Derby", "Stoke-on-Trent", "Wolverhampton", "Middlesbrough",
-    "Greater London", "Greater Manchester", "West Midlands", "South East England", "South West England",
-    "East Midlands", "West Yorkshire", "North West England", "East of England", "Scotland", "Wales",
-    "Northern Ireland"
+    // // ,\"United Kingdom\"
+    // , "England", "London", "Manchester", "Birmingham", "Liverpool", "Leeds", "Sheffield", "Bristol", "Newcastle",
+    // "Nottingham", "Leicester", "Coventry", "Bradford", "Cardiff", "Belfast", "Edinburgh", "Glasgow", "Aberdeen",
+    // "Southampton", "Portsmouth", "Plymouth", "Reading", "Milton Keynes", "Northampton", "Swindon", "Bournemouth",
+    // "Cambridge", "Oxford", "York", "Derby", "Stoke-on-Trent", "Wolverhampton", "Middlesbrough",
+    // "Greater London", "Greater Manchester", "West Midlands", "South East England", "South West England",
+    // "East Midlands", "West Yorkshire", "North West England", "East of England", "Scotland", "Wales",
+    // "Northern Ireland"
 ];
 
 let inMemoryLangCache = {};
@@ -560,8 +560,10 @@ function analyzeJobDescription() {
         /\bcannot\s+sponsor\b/i,
         /\b(can\s?not|cannot|can't|do\s+not|don't)\s+(provide|offer|support|sponsor)\s+(visa|sponsorship)?\b/i,
         /\bwithout\s+(visa\s+)?sponsorship\b/i,
-        /\bmust\s+(be|have)\s+(legally\s+)?(authorized|eligible|entitled)\s+to\s+work\b/i,
-        /\bmust\s+have\s+(the\s+)?(legal\s+)?right\s+to\s+work\b/i,
+        /\b(must|and|already)\s+(be|have)\s+(legally\s+)?(authorized|eligible|entitled)\s+to\s+work\b/i,
+        /\b(must|and|already)\s+have\s+(the\s+)?(legal\s+)?right\s+to\s+work\b/i,
+        /\b(have|possess)\s+(the\s+)?(legal\s+)?right\s+to\s+work\s+in\b/i,
+        /\b(right\s+to\s+work|working\s+rights)\s+in\s+(the\s+)?(eu|eea|uk|us|europe|switzerland|germany|france|netherlands|belgium|spain|italy|ireland)\b/i,
         /\brequire[sd]?\s+(eu|eea|european|uk|us)\s+(citizenship|residency|work\s*(permit|authorization|visa))\b/i,
         /\b(eu|eea|european)\s+(citizen(ship)?|national(ity)?|passport)\s+(required|only|necessary|needed|must)\b/i,
         /\bmust\s+(already\s+)?(hold|have|possess)\s+a\s+(valid\s+)?(work\s*)?(permit|visa|authorization)\b/i,
@@ -569,6 +571,8 @@ function analyzeJobDescription() {
         /\beligib(le|ility)\s+to\s+work\s+(in\s+)?(the\s+)?(eu|eea|uk|us|europe)\b/i,
         /\bno\s+relocation\s+(assistance|support|package)\b/i,
         /\bgeen\s+(visumsponsoring|kennismigrantenregeling)\b/i, // Dutch
+        /\b(visa|work\s*permit)\s+restrictions\b/i,
+        /\b(only|solely)\s+(consider|accept|process)(ing)?\s+(applications\s+from\s+|candidates\s+)?(who\s+are\s+)?(swiss|eu|eea|uk|us|local|resident|permit\s*holder|citizen|national)s?\b/i,
     ];
     const noSponsorship = NO_SPONSORSHIP_PATTERNS.some(p => p.test(textForAnalysis));
 

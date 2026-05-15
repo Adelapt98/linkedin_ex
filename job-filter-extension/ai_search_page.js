@@ -2,95 +2,95 @@
     'use strict';
     const countriesToRemove = [
         // Lithuania
-        "Lithuania","Vilnius","Kaunas","Klaipeda","Siauliai","Panevezys","Alytus","Marijampole","Utena",
+        "Lithuania", "Vilnius", "Kaunas", "Klaipeda", "Siauliai", "Panevezys", "Alytus", "Marijampole", "Utena",
         // Romania
-        "Romania","Bucharest","Cluj","Cluj-Napoca","Timisoara","Iasi","Constanta","Brasov","Transylvania",
-        "Craiova","Galati","Sibiu","Oradea","Arad","Targu Mures","Ploiesti","Pitesti","Bacau",
+        "Romania", "Bucharest", "Cluj", "Cluj-Napoca", "Timisoara", "Iasi", "Constanta", "Brasov", "Transylvania",
+        "Craiova", "Galati", "Sibiu", "Oradea", "Arad", "Targu Mures", "Ploiesti", "Pitesti", "Bacau",
         // France
-        "France","Paris","Marseille","Lyon","Toulouse","Nice","Nantes","Strasbourg","Montpellier",
-        "Bordeaux","Lille","Rennes","Reims","Toulon","Grenoble","Dijon","Angers","Nimes","Aix-en-Provence",
-        "Saint-Etienne","Brest","Le Havre","Clermont-Ferrand","Tours","Amiens","Metz","Perpignan","Besancon",
-        "Orleans","Rouen","Mulhouse","Caen","Nancy","Argenteuil","Montreuil","Saint-Denis","Roubaix",
-        "Avignon","Poitiers","Versailles","La Rochelle","Pau","Calais","Cannes","Antibes",
-        "Levallois-Perret","Levallois","Issy-les-Moulineaux","Neuilly-sur-Seine","Courbevoie","La Defense",
-        "Boulogne-Billancourt","Saint-Ouen","St.-Ouen","Clichy","Puteaux","Rueil-Malmaison","Suresnes",
-        "Ile-de-France","\u00cele-de-France","Hauts-de-Seine","Seine-Saint-Denis","Val-de-Marne",
-        "Hauts-de-France","Auvergne-Rh\u00f4ne-Alpes","Nouvelle-Aquitaine","Occitanie","Grand Est",
-        "Provence-Alpes-C\u00f4te d'Azur","Pays de la Loire","Normandie","Bretagne","Bourgogne-Franche-Comt\u00e9",
-        "Centre-Val de Loire","Corse",
+        "France", "Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Strasbourg", "Montpellier",
+        "Bordeaux", "Lille", "Rennes", "Reims", "Toulon", "Grenoble", "Dijon", "Angers", "Nimes", "Aix-en-Provence",
+        "Saint-Etienne", "Brest", "Le Havre", "Clermont-Ferrand", "Tours", "Amiens", "Metz", "Perpignan", "Besancon",
+        "Orleans", "Rouen", "Mulhouse", "Caen", "Nancy", "Argenteuil", "Montreuil", "Saint-Denis", "Roubaix",
+        "Avignon", "Poitiers", "Versailles", "La Rochelle", "Pau", "Calais", "Cannes", "Antibes",
+        "Levallois-Perret", "Levallois", "Issy-les-Moulineaux", "Neuilly-sur-Seine", "Courbevoie", "La Defense",
+        "Boulogne-Billancourt", "Saint-Ouen", "St.-Ouen", "Clichy", "Puteaux", "Rueil-Malmaison", "Suresnes",
+        "Ile-de-France", "\u00cele-de-France", "Hauts-de-Seine", "Seine-Saint-Denis", "Val-de-Marne",
+        "Hauts-de-France", "Auvergne-Rh\u00f4ne-Alpes", "Nouvelle-Aquitaine", "Occitanie", "Grand Est",
+        "Provence-Alpes-C\u00f4te d'Azur", "Pays de la Loire", "Normandie", "Bretagne", "Bourgogne-Franche-Comt\u00e9",
+        "Centre-Val de Loire", "Corse",
         // Ukraine
-        "Ukraine","Kyiv","Kiev","Kharkiv","Odesa","Odessa","Dnipro","Lviv","Zaporizhzhia","Donetsk",
-        "Vinnytsia","Mykolaiv","Poltava","Chernihiv","Zhytomyr","Sumy","Rivne","Ivano-Frankivsk",
+        "Ukraine", "Kyiv", "Kiev", "Kharkiv", "Odesa", "Odessa", "Dnipro", "Lviv", "Zaporizhzhia", "Donetsk",
+        "Vinnytsia", "Mykolaiv", "Poltava", "Chernihiv", "Zhytomyr", "Sumy", "Rivne", "Ivano-Frankivsk",
         // Italy
-        "Italy","Rome","Milan","Naples","Turin","Palermo","Genoa","Bologna","Florence","Venice",
-        "Lombardy","Lazio","Campania","Verona","Catania","Bari","Padua","Trieste","Brescia","Parma",
-        "Modena","Reggio Emilia","Perugia","Cagliari","Livorno","Ravenna","Ferrara","Rimini","Bergamo",
-        "Piedmont","Tuscany","Veneto","Emilia-Romagna","Puglia","Sicily","Sardinia","Calabria","Liguria",
-        "Friuli Venezia Giulia","Trentino-Alto Adige","Umbria","Marche","Abruzzo","Basilicata","Molise",
+        "Italy", "Rome", "Milan", "Naples", "Turin", "Palermo", "Genoa", "Bologna", "Florence", "Venice",
+        "Lombardy", "Lazio", "Campania", "Verona", "Catania", "Bari", "Padua", "Trieste", "Brescia", "Parma",
+        "Modena", "Reggio Emilia", "Perugia", "Cagliari", "Livorno", "Ravenna", "Ferrara", "Rimini", "Bergamo",
+        "Piedmont", "Tuscany", "Veneto", "Emilia-Romagna", "Puglia", "Sicily", "Sardinia", "Calabria", "Liguria",
+        "Friuli Venezia Giulia", "Trentino-Alto Adige", "Umbria", "Marche", "Abruzzo", "Basilicata", "Molise",
         // Poland
-        "Poland","Warsaw","Krakow","Cracow","Lodz","Wroclaw","Poznan","Gdansk","Szczecin",
-        "Bydgoszcz","Lublin","Silesia","Pomerania","Katowice","Bialystok","Gdynia","Czestochowa",
-        "Radom","Sosnowiec","Torun","Kielce","Rzeszow","Gliwice","Zabrze","Olsztyn","Opole",
-        "Masovia","Greater Poland","Lower Silesia","Lesser Poland","Mazovia",
+        "Poland", "Warsaw", "Krakow", "Cracow", "Lodz", "Wroclaw", "Poznan", "Gdansk", "Szczecin",
+        "Bydgoszcz", "Lublin", "Silesia", "Pomerania", "Katowice", "Bialystok", "Gdynia", "Czestochowa",
+        "Radom", "Sosnowiec", "Torun", "Kielce", "Rzeszow", "Gliwice", "Zabrze", "Olsztyn", "Opole",
+        "Masovia", "Greater Poland", "Lower Silesia", "Lesser Poland", "Mazovia",
         // Portugal
-        "Portugal","Lisbon","Porto","Amadora","Braga","Algarve","Madeira","Azores","Coimbra",
-        "Funchal","Setubal","Aveiro","Viseu","Faro","Leiria","Evora","Guimaraes",
+        "Portugal", "Lisbon", "Porto", "Amadora", "Braga", "Algarve", "Madeira", "Azores", "Coimbra",
+        "Funchal", "Setubal", "Aveiro", "Viseu", "Faro", "Leiria", "Evora", "Guimaraes",
         // Estonia
-        "Estonia","Tallinn","Tartu","Narva","Parnu","Harju County",
+        "Estonia", "Tallinn", "Tartu", "Narva", "Parnu", "Harju County",
         // Bulgaria
-        "Bulgaria","Sofia","Plovdiv","Varna","Burgas","Ruse","Stara Zagora","Pleven","Dobrich",
+        "Bulgaria", "Sofia", "Plovdiv", "Varna", "Burgas", "Ruse", "Stara Zagora", "Pleven", "Dobrich",
         // Latvia
-        "Latvia","Riga","Daugavpils","Liepaja","Jelgava","Jurmala","Ventspils",
+        "Latvia", "Riga", "Daugavpils", "Liepaja", "Jelgava", "Jurmala", "Ventspils",
         // Slovakia
-        "Slovakia","Bratislava","Kosice","Presov","Zilina","Banska Bystrica","Nitra","Trnava","Trencin",
+        "Slovakia", "Bratislava", "Kosice", "Presov", "Zilina", "Banska Bystrica", "Nitra", "Trnava", "Trencin",
         // Slovenia
-        "Slovenia","Ljubljana","Maribor","Celje","Kranj","Koper","Novo Mesto",
+        "Slovenia", "Ljubljana", "Maribor", "Celje", "Kranj", "Koper", "Novo Mesto",
         // Hungary
-        "Hungary","Budapest","Debrecen","Szeged","Miskolc","Pecs","Gyor","Nyiregyhaza","Kecskemet",
-        "Szekesfehervar","Szombathely","Veszprem",
+        "Hungary", "Budapest", "Debrecen", "Szeged", "Miskolc", "Pecs", "Gyor", "Nyiregyhaza", "Kecskemet",
+        "Szekesfehervar", "Szombathely", "Veszprem",
         // Croatia
-        "Croatia","Zagreb","Split","Rijeka","Osijek","Zadar","Dalmatia","Slavonia","Istria","Dubrovnik","Pula",
+        "Croatia", "Zagreb", "Split", "Rijeka", "Osijek", "Zadar", "Dalmatia", "Slavonia", "Istria", "Dubrovnik", "Pula",
         // Greece
-        "Greece","Athens","Thessaloniki","Patras","Heraklion","Crete","Peloponnese","Larissa",
-        "Volos","Ioannina","Kavala","Rhodes","Corfu","Attica","Central Macedonia",
+        "Greece", "Athens", "Thessaloniki", "Patras", "Heraklion", "Crete", "Peloponnese", "Larissa",
+        "Volos", "Ioannina", "Kavala", "Rhodes", "Corfu", "Attica", "Central Macedonia",
         // Cyprus
-        "Cyprus","Nicosia","Limassol","Larnaca","Paphos","Famagusta","Kyrenia",
+        "Cyprus", "Nicosia", "Limassol", "Larnaca", "Paphos", "Famagusta", "Kyrenia",
         // Malta
-        "Malta","Valletta","Birkirkara","Mosta","Sliema","St Julian","St. Julian","Gzira","Msida",
+        "Malta", "Valletta", "Birkirkara", "Mosta", "Sliema", "St Julian", "St. Julian", "Gzira", "Msida",
         // Belarus
-        "Belarus","Minsk","Gomel","Vitebsk","Mogilev","Grodno","Brest",
+        "Belarus", "Minsk", "Gomel", "Vitebsk", "Mogilev", "Grodno", "Brest",
         // Moldova
-        "Moldova","Chisinau","Tiraspol","Balti","Bender",
+        "Moldova", "Chisinau", "Tiraspol", "Balti", "Bender",
         // Serbia
-        "Serbia","Belgrade","Novi Sad","Nis","Kragujevac","Vojvodina","Subotica",
+        "Serbia", "Belgrade", "Novi Sad", "Nis", "Kragujevac", "Vojvodina", "Subotica",
         // Bosnia and Herzegovina
-        "Bosnia","Bosnia and Herzegovina","Sarajevo","Banja Luka","Tuzla","Zenica","Mostar",
+        "Bosnia", "Bosnia and Herzegovina", "Sarajevo", "Banja Luka", "Tuzla", "Zenica", "Mostar",
         // Albania
-        "Albania","Tirana","Durres","Vlore","Elbasan","Shkoder","Fier","Korce",
+        "Albania", "Tirana", "Durres", "Vlore", "Elbasan", "Shkoder", "Fier", "Korce",
         // Montenegro
-        "Montenegro","Podgorica","Niksic","Budva","Kotor","Herceg Novi","Bar",
+        "Montenegro", "Podgorica", "Niksic", "Budva", "Kotor", "Herceg Novi", "Bar",
         // North Macedonia
-        "North Macedonia","Skopje","Bitola","Kumanovo","Prilep","Tetovo","Ohrid",
+        "North Macedonia", "Skopje", "Bitola", "Kumanovo", "Prilep", "Tetovo", "Ohrid",
         // Kosovo
-        "Kosovo","Pristina","Prizren","Ferizaj","Peja","Mitrovica","Gjakova",
+        "Kosovo", "Pristina", "Prizren", "Ferizaj", "Peja", "Mitrovica", "Gjakova",
         // Czech Republic / Czechia
-        "Czechia","Czech Republic","Prague","Brno","Ostrava","Plzen","Liberec","Olomouc","Bohemia","Moravia",
-        "Hradec Kralove","Ceske Budejovice","Usti nad Labem","Pardubice","Zlin","Karlovy Vary",
+        "Czechia", "Czech Republic", "Prague", "Brno", "Ostrava", "Plzen", "Liberec", "Olomouc", "Bohemia", "Moravia",
+        "Hradec Kralove", "Ceske Budejovice", "Usti nad Labem", "Pardubice", "Zlin", "Karlovy Vary",
         // Spain
-        "Spain","Madrid","Barcelona","Valencia","Seville","Zaragoza","Malaga","Murcia","Palma",
-        "Catalonia","Andalusia","Galicia","Basque Country","Bilbao","Las Palmas","Alicante","Cordoba",
-        "Valladolid","Vigo","Gijon","Hospitalet","Vitoria","Granada","A Coruna","Elche","Oviedo",
-        "Santander","Pamplona","San Sebastian","Donostia","Castellon","Burgos","Salamanca","Albacete",
-        "Community of Madrid","Comunidad de Madrid","Comunitat Valenciana","Castilla y Leon","Castilla-La Mancha",
-        "Aragon","Canary Islands","Balearic Islands","Extremadura","Asturias","Navarra","Cantabria","La Rioja",
-        // UK
-        "England","London","Manchester","Birmingham","Liverpool","Leeds","Sheffield","Bristol","Newcastle",
-        "Nottingham","Leicester","Coventry","Bradford","Cardiff","Belfast","Edinburgh","Glasgow","Aberdeen",
-        "Southampton","Portsmouth","Plymouth","Reading","Milton Keynes","Northampton","Swindon","Bournemouth",
-        "Cambridge","Oxford","York","Derby","Stoke-on-Trent","Wolverhampton","Middlesbrough",
-        "Greater London","Greater Manchester","West Midlands","South East England","South West England",
-        "East Midlands","West Yorkshire","North West England","East of England","Scotland","Wales",
-        "Northern Ireland",
+        "Spain", "Madrid", "Barcelona", "Valencia", "Seville", "Zaragoza", "Malaga", "Murcia", "Palma",
+        "Catalonia", "Andalusia", "Galicia", "Basque Country", "Bilbao", "Las Palmas", "Alicante", "Cordoba",
+        "Valladolid", "Vigo", "Gijon", "Hospitalet", "Vitoria", "Granada", "A Coruna", "Elche", "Oviedo",
+        "Santander", "Pamplona", "San Sebastian", "Donostia", "Castellon", "Burgos", "Salamanca", "Albacete",
+        "Community of Madrid", "Comunidad de Madrid", "Comunitat Valenciana", "Castilla y Leon", "Castilla-La Mancha",
+        "Aragon", "Canary Islands", "Balearic Islands", "Extremadura", "Asturias", "Navarra", "Cantabria", "La Rioja",
+        // // UK
+        // "England","London","Manchester","Birmingham","Liverpool","Leeds","Sheffield","Bristol","Newcastle",
+        // "Nottingham","Leicester","Coventry","Bradford","Cardiff","Belfast","Edinburgh","Glasgow","Aberdeen",
+        // "Southampton","Portsmouth","Plymouth","Reading","Milton Keynes","Northampton","Swindon","Bournemouth",
+        // "Cambridge","Oxford","York","Derby","Stoke-on-Trent","Wolverhampton","Middlesbrough",
+        // "Greater London","Greater Manchester","West Midlands","South East England","South West England",
+        // "East Midlands","West Yorkshire","North West England","East of England","Scotland","Wales",
+        // "Northern Ireland",
     ];
     const countriesLower = countriesToRemove.map(c => c.toLowerCase());
 
@@ -126,10 +126,10 @@
             b = document.createElement('div');
             b.id = 'job-filter-badge-ai';
             Object.assign(b.style, {
-                position:'fixed', top:'70px', right:'20px', backgroundColor:'#0a66c2',
-                color:'white', padding:'10px 15px', borderRadius:'8px', fontWeight:'bold',
-                zIndex:'9999', boxShadow:'0 4px 6px rgba(0,0,0,0.1)',
-                fontFamily:'system-ui,sans-serif', fontSize:'14px'
+                position: 'fixed', top: '70px', right: '20px', backgroundColor: '#0a66c2',
+                color: 'white', padding: '10px 15px', borderRadius: '8px', fontWeight: 'bold',
+                zIndex: '9999', boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                fontFamily: 'system-ui,sans-serif', fontSize: '14px'
             });
             document.body.appendChild(b);
         }
@@ -138,14 +138,14 @@
 
     function getCurrentJobId() {
         try { return new URL(window.location.href).searchParams.get('currentJobId'); }
-        catch(e) { return null; }
+        catch (e) { return null; }
     }
 
     function approxPostedTs(str) {
         if (!str) return null;
         const m = str.toLowerCase().match(/(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago/);
         if (!m) return null;
-        const ms = {second:1e3,minute:6e4,hour:36e5,day:864e5,week:6048e5,month:2592e6,year:31536e6};
+        const ms = { second: 1e3, minute: 6e4, hour: 36e5, day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
         return Date.now() - parseInt(m[1]) * ms[m[2]];
     }
 
@@ -177,10 +177,10 @@
                     if (!hide && settings.hideApplied)
                         hide = [...card.querySelectorAll('p')].some(p => p.textContent.trim().toLowerCase() === 'applied');
                     if (hide) {
-                        card.style.setProperty('display','none','important');
+                        card.style.setProperty('display', 'none', 'important');
                         card.dataset.aiJobHidden = 'true';
                         const hr = card.nextElementSibling;
-                        if (hr && hr.tagName === 'HR') hr.style.setProperty('display','none','important');
+                        if (hr && hr.tagName === 'HR') hr.style.setProperty('display', 'none', 'important');
                         hidden++;
                     } else {
                         card.style.removeProperty('display');
@@ -200,7 +200,7 @@
         if (!Object.keys(inMemoryLangCache).length) return;
         const titleToId = {};
         Object.entries(inMemoryLangCache).forEach(([id, d]) => {
-            if (d.title) titleToId[d.title.toLowerCase().replace(/\s+/g,' ').trim()] = id;
+            if (d.title) titleToId[d.title.toLowerCase().replace(/\s+/g, ' ').trim()] = id;
         });
         getJobCardWrappers().forEach(card => {
             if (card.dataset.aiJobHidden === 'true') return;
@@ -224,11 +224,11 @@
             // Fallback: title matching
             if (!jid) {
                 const span = card.querySelector('span.de4f078c');
-                const key = span ? span.textContent.toLowerCase().replace(/\s+/g,' ').trim() : '';
+                const key = span ? span.textContent.toLowerCase().replace(/\s+/g, ' ').trim() : '';
                 if (key) {
                     jid = titleToId[key];
                     if (!jid && key.length > 10) {
-                        const pk = Object.keys(titleToId).find(k => k.startsWith(key.slice(0,25)));
+                        const pk = Object.keys(titleToId).find(k => k.startsWith(key.slice(0, 25)));
                         if (pk) jid = titleToId[pk];
                     }
                 }
@@ -256,16 +256,16 @@
             const row = document.createElement('div');
             row.className = 'job-filter-ai-lbl';
             row.style.cssText = 'display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;';
-            const tag = (t,bg,fg) => { const s=document.createElement('span'); s.style.cssText=`background:${bg};color:${fg};padding:2px 6px;border-radius:4px;font-size:11px;font-weight:bold;`; s.innerText=t; return s; };
-            row.appendChild(d.isEnglish ? tag('[EN]','#e8f5e9','#2e7d32') : tag('[Non-EN]','#ffebee','#d32f2f'));
-            if (d.reqLang) row.appendChild(tag('[Req. Lang]','#fff3e0','#e65100'));
+            const tag = (t, bg, fg) => { const s = document.createElement('span'); s.style.cssText = `background:${bg};color:${fg};padding:2px 6px;border-radius:4px;font-size:11px;font-weight:bold;`; s.innerText = t; return s; };
+            row.appendChild(d.isEnglish ? tag('[EN]', '#e8f5e9', '#2e7d32') : tag('[Non-EN]', '#ffebee', '#d32f2f'));
+            if (d.reqLang) row.appendChild(tag('[Req. Lang]', '#fff3e0', '#e65100'));
             if (d.noSponsorship) {
-                row.appendChild(tag('[No Visa]','#b71c1c','#fff'));
+                row.appendChild(tag('[No Visa]', '#b71c1c', '#fff'));
                 const inner = card.querySelector('div.abcc1c89');
-                if (inner) inner.style.setProperty('background-color','#ffebee','important');
+                if (inner) inner.style.setProperty('background-color', '#ffebee', 'important');
             } else if (d.isEnglish && !d.reqLang) {
                 const inner = card.querySelector('div.abcc1c89');
-                if (inner) inner.style.setProperty('background-color','#e8f5e9','important');
+                if (inner) inner.style.setProperty('background-color', '#e8f5e9', 'important');
             }
             anchor.appendChild(row);
         });
@@ -331,21 +331,20 @@
         return 'Unknown';
     }
 
-    /** Location from the metadata paragraph containing span.a219e9ac */
+    /** Location from the metadata paragraph containing a middle dot */
     function getLocation() {
         const pane = getDetailPane();
         if (!pane) return 'N/A';
-        // The metadata line has: <span class="a219e9ac">Location</span> · <span>time ago</span> · <span>applicants</span>
-        // Find all paragraphs that contain a219e9ac spans AND a middle-dot separator
+        // The metadata line has: Location · time ago · applicants
         const paragraphs = pane.querySelectorAll('p');
         for (const p of paragraphs) {
             const txt = p.textContent;
             if (txt.includes('\u00b7') || txt.includes('·')) { // middle dot
-                const locSpan = p.querySelector('span.a219e9ac');
-                if (locSpan) {
-                    const loc = locSpan.textContent.trim();
-                    // Make sure it's actually a location (not "91 people clicked apply")
-                    if (loc && !/\d+\s+(people|applicant)/i.test(loc) && !/promoted/i.test(loc)) {
+                const parts = txt.split(/[\u00b7·]/);
+                if (parts.length > 0) {
+                    const loc = parts[0].trim();
+                    // Make sure it's actually a location (not "91 applicants", "Promoted", "Viewed", etc.)
+                    if (loc && !/^\d+/.test(loc) && !/promoted|viewed|applied|reposted|actively/i.test(loc)) {
                         return loc;
                     }
                 }
@@ -380,8 +379,10 @@
         /\bcannot\s+sponsor\b/i,
         /\b(can\s?not|cannot|can't|do\s+not|don't)\s+(provide|offer|support|sponsor)\s+(visa|sponsorship)?\b/i,
         /\bwithout\s+(visa\s+)?sponsorship\b/i,
-        /\bmust\s+(be|have)\s+(legally\s+)?(authorized|eligible|entitled)\s+to\s+work\b/i,
-        /\bmust\s+have\s+(the\s+)?(legal\s+)?right\s+to\s+work\b/i,
+        /\b(must|and|already)\s+(be|have)\s+(legally\s+)?(authorized|eligible|entitled)\s+to\s+work\b/i,
+        /\b(must|and|already)\s+have\s+(the\s+)?(legal\s+)?right\s+to\s+work\b/i,
+        /\b(have|possess)\s+(the\s+)?(legal\s+)?right\s+to\s+work\s+in\b/i,
+        /\b(right\s+to\s+work|working\s+rights)\s+in\s+(the\s+)?(eu|eea|uk|us|europe|switzerland|germany|france|netherlands|belgium|spain|italy|ireland)\b/i,
         /\brequire[sd]?\s+(eu|eea|european|uk|us)\s+(citizenship|residency|work\s*(permit|authorization|visa))\b/i,
         /\b(eu|eea|european)\s+(citizen(ship)?|national(ity)?|passport)\s+(required|only|necessary|needed|must)\b/i,
         /\bmust\s+(already\s+)?(hold|have|possess)\s+a\s+(valid\s+)?(work\s*)?(permit|visa|authorization)\b/i,
@@ -389,6 +390,8 @@
         /\beligib(le|ility)\s+to\s+work\s+(in\s+)?(the\s+)?(eu|eea|uk|us|europe)\b/i,
         /\bno\s+relocation\s+(assistance|support|package)\b/i,
         /\bgeen\s+(visumsponsoring|kennismigrantenregeling)\b/i,
+        /\b(visa|work\s*permit)\s+restrictions\b/i,
+        /\b(only|solely)\s+(consider|accept|process)(ing)?\s+(applications\s+from\s+|candidates\s+)?(who\s+are\s+)?(swiss|eu|eea|uk|us|local|resident|permit\s*holder|citizen|national)s?\b/i,
     ];
 
     // ── Detail: Analyze job description ───────────────────────────────────────
@@ -515,7 +518,7 @@
                 const profileLinks = pane.querySelectorAll('a[href*="linkedin.com/in/"]');
                 if (profileLinks.length) {
                     recruiterLink = profileLinks[0].href.split('?')[0];
-                    recruiter = profileLinks[0].textContent.replace(/\s+/g,' ').trim() || 'N/A';
+                    recruiter = profileLinks[0].textContent.replace(/\s+/g, ' ').trim() || 'N/A';
                 }
             }
             const emails = descText.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi);
@@ -551,7 +554,7 @@
                         ...metadata,
                         ...existing,
                         saved: true, email, recruiter, recruiterLink,
-                        description: descText.replace(/\r?\n|\r/g,' ').replace(/"/g,'""'),
+                        description: descText.replace(/\r?\n|\r/g, ' ').replace(/"/g, '""'),
                         dateSaved: new Date().toISOString(), link: cleanLink
                     };
                     chrome.storage.local.set({ jobLanguageCache: cache }, () => {
@@ -567,20 +570,40 @@
 
     // ── Detail: Add save button next to ALL "Save the job" buttons ─────────────
     function addSaveButtonAI() {
-        // Find ALL native save buttons (top header + sticky bottom bar)
-        const nativeSaves = document.querySelectorAll('button[aria-label="Save the job"]');
-        if (!nativeSaves.length) return;
+        // Try to find the native save button(s) anywhere in the document
+        let anchorButtons = Array.from(document.querySelectorAll('button[aria-label="Save the job"]'));
+        
+        // Fallback: If no save button is found (e.g. job is Applied), look for other action buttons in the detail pane
+        if (!anchorButtons.length) {
+            const pane = getDetailPane();
+            if (pane) {
+                const allButtons = Array.from(pane.querySelectorAll('button'));
+                const primaryAction = allButtons.find(b => {
+                    const t = b.textContent.toLowerCase();
+                    const l = (b.getAttribute('aria-label') || '').toLowerCase();
+                    return t.includes('apply') || t.includes('applied') || l.includes('apply') || l.includes('applied') || l.includes('more options');
+                });
+                if (primaryAction) anchorButtons = [primaryAction];
+            }
+        }
 
-        nativeSaves.forEach(nativeSave => {
-            // Walk up to find the flex container holding this button
-            const parentDiv = nativeSave.closest('div.ff56cc14') || nativeSave.parentElement;
-            if (!parentDiv || !parentDiv.parentElement) return;
-            // Check if we already added one near this specific save button
-            if (parentDiv.parentElement.querySelector('.job-filter-save-btn-ai-wrap')) return;
+        if (!anchorButtons.length) return;
+
+        anchorButtons.forEach(anchorBtn => {
+            let targetNode = anchorBtn;
+            // Often LinkedIn wraps buttons in a simple div container. Insert before the container if it looks like a wrapper.
+            if (anchorBtn.parentElement && anchorBtn.parentElement.tagName === 'DIV' && anchorBtn.parentElement.childElementCount <= 2) {
+                targetNode = anchorBtn.parentElement;
+            }
+
+            if (!targetNode || !targetNode.parentElement) return;
+            // Ensure we haven't already inserted one next to this target
+            if (targetNode.parentElement.querySelector('.job-filter-save-btn-ai-wrap')) return;
 
             const wrap = document.createElement('div');
-            wrap.className = 'job-filter-save-btn-ai-wrap ff56cc14 _6764c20f e080ef7b';
-            wrap.style.cssText = 'display:inline-flex;align-items:center;';
+            wrap.className = 'job-filter-save-btn-ai-wrap';
+            wrap.style.cssText = 'display:inline-flex;align-items:center;margin-right:8px;';
+            
             const btn = document.createElement('button');
             btn.className = 'job-filter-save-btn-ai';
             btn.innerHTML = '📥 Save Job';
@@ -588,10 +611,9 @@
             btn.onmouseover = () => { btn.style.backgroundColor = '#218838'; };
             btn.onmouseout = () => { btn.style.backgroundColor = '#28a745'; };
             btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); saveCurrentJobAI(); });
+            
             wrap.appendChild(btn);
-
-            // Insert BEFORE the save button's container (so it appears to the left of Save)
-            parentDiv.parentElement.insertBefore(wrap, parentDiv);
+            targetNode.parentElement.insertBefore(wrap, targetNode);
         });
     }
 
