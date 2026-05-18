@@ -574,7 +574,7 @@ function analyzeJobDescription() {
         /\b(visa|work\s*permit)\s+restrictions\b/i,
         /\b(only|solely)\s+(consider|accept|process)(ing)?\s+(applications\s+from\s+|candidates\s+)?(who\s+are\s+)?(swiss|eu|eea|uk|us|local|resident|permit\s*holder|citizen|national)s?\b/i,
     ];
-    const noSponsorship = NO_SPONSORSHIP_PATTERNS.some(p => p.test(textForAnalysis));
+    let noSponsorship = false;
 
     // --- SPA CLEANUP ---
     // LinkedIn recycles DOM elements. We must clear old highlights before analyzing the new job text.
@@ -633,6 +633,7 @@ function analyzeJobDescription() {
             block.style.padding = '2px 4px';
             block.style.borderRadius = '4px';
             block.classList.add('job-filter-highlight');
+            noSponsorship = true;
         }
     });
 

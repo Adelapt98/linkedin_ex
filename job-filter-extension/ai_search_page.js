@@ -415,8 +415,8 @@
         const engWords = fullText.match(/\b(the|and|to|of|a|in|for|is|on|that|by|this|with|i|you|it|not|or|be|are|from|at|as|your|we)\b/gi);
         const wordCount = fullText.split(/\s+/).length;
         const isEnglish = engWords && (engWords.length / wordCount) > 0.15;
-
-        const noSponsorship = NO_VISA.some(p => p.test(fullText));
+        
+        let noSponsorship = false;
 
         // Clean old highlights
         descEls.forEach(el => {
@@ -447,6 +447,7 @@
                     block.style.color = '#e65100'; block.style.fontWeight = 'bold';
                     block.style.backgroundColor = '#fff3e0'; block.style.padding = '2px 4px';
                     block.style.borderRadius = '4px'; block.classList.add('job-filter-highlight');
+                    noSponsorship = true;
                 }
             });
         });
