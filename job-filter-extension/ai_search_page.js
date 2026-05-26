@@ -34,7 +34,7 @@
         "Masovia", "Greater Poland", "Lower Silesia", "Lesser Poland", "Mazovia",
         // Portugal
         "Portugal", "Lisbon", "Porto", "Amadora", "Braga", "Algarve", "Madeira", "Azores", "Coimbra",
-        "Funchal", "Setubal", "Aveiro", "Viseu", "Faro", "Leiria", "Evora", "Guimaraes",
+        "Funchal", "Setubal", "Aveiro", "Viseu", "Faro", "Leiria", "Evora", "Guimaraes", "Vila Real",
         // Estonia
         "Estonia", "Tallinn", "Tartu", "Narva", "Parnu", "Harju County",
         // Bulgaria
@@ -82,7 +82,7 @@
         "Valladolid", "Vigo", "Gijon", "Hospitalet", "Vitoria", "Granada", "A Coruna", "Elche", "Oviedo",
         "Santander", "Pamplona", "San Sebastian", "Donostia", "Castellon", "Burgos", "Salamanca", "Albacete",
         "Community of Madrid", "Comunidad de Madrid", "Comunitat Valenciana", "Castilla y Leon", "Castilla-La Mancha",
-        "Aragon", "Canary Islands", "Balearic Islands", "Extremadura", "Asturias", "Navarra", "Cantabria", "La Rioja",
+        "Aragon", "Canary Islands", "Balearic Islands", "Extremadura", "Asturias", "Navarra", "Cantabria", "La Rioja", "Gibraltar"
         // // UK
         // "England","London","Manchester","Birmingham","Liverpool","Leeds","Sheffield","Bristol","Newcastle",
         // "Nottingham","Leicester","Coventry","Bradford","Cardiff","Belfast","Edinburgh","Glasgow","Aberdeen",
@@ -415,7 +415,7 @@
         const engWords = fullText.match(/\b(the|and|to|of|a|in|for|is|on|that|by|this|with|i|you|it|not|or|be|are|from|at|as|your|we)\b/gi);
         const wordCount = fullText.split(/\s+/).length;
         const isEnglish = engWords && (engWords.length / wordCount) > 0.15;
-        
+
         let noSponsorship = false;
 
         // Clean old highlights
@@ -573,7 +573,7 @@
     function addSaveButtonAI() {
         // Try to find the native save button(s) anywhere in the document
         let anchorButtons = Array.from(document.querySelectorAll('button[aria-label="Save the job"]'));
-        
+
         // Fallback: If no save button is found (e.g. job is Applied), look for other action buttons in the detail pane
         if (!anchorButtons.length) {
             const pane = getDetailPane();
@@ -604,7 +604,7 @@
             const wrap = document.createElement('div');
             wrap.className = 'job-filter-save-btn-ai-wrap';
             wrap.style.cssText = 'display:inline-flex;align-items:center;margin-right:8px;';
-            
+
             const btn = document.createElement('button');
             btn.className = 'job-filter-save-btn-ai';
             btn.innerHTML = '📥 Save Job';
@@ -612,7 +612,7 @@
             btn.onmouseover = () => { btn.style.backgroundColor = '#218838'; };
             btn.onmouseout = () => { btn.style.backgroundColor = '#28a745'; };
             btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); saveCurrentJobAI(); });
-            
+
             wrap.appendChild(btn);
             targetNode.parentElement.insertBefore(wrap, targetNode);
         });

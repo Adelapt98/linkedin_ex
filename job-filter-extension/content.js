@@ -67,7 +67,7 @@ const countriesToRemove = [
 
     // Portugal
     "Portugal", "Lisbon", "Porto", "Amadora", "Braga", "Algarve", "Madeira", "Azores", "Coimbra",
-    "Funchal", "Setubal", "Aveiro", "Viseu", "Faro", "Leiria", "Evora", "Guimaraes",
+    "Funchal", "Setubal", "Aveiro", "Viseu", "Faro", "Leiria", "Evora", "Guimaraes", "Vila Real",
 
     // Estonia
     "Estonia", "Tallinn", "Tartu", "Narva", "Parnu", "Harju County",
@@ -135,7 +135,7 @@ const countriesToRemove = [
     "Valladolid", "Vigo", "Gijon", "Hospitalet", "Vitoria", "Granada", "A Coruna", "Elche", "Oviedo",
     "Santander", "Pamplona", "San Sebastian", "Donostia", "Castellon", "Burgos", "Salamanca", "Albacete",
     "Community of Madrid", "Comunidad de Madrid", "Comunitat Valenciana", "Castilla y Leon", "Castilla-La Mancha",
-    "Aragon", "Canary Islands", "Balearic Islands", "Extremadura", "Asturias", "Navarra", "Cantabria", "La Rioja"
+    "Aragon", "Canary Islands", "Balearic Islands", "Extremadura", "Asturias", "Navarra", "Cantabria", "La Rioja", "Gibraltar"
 
     // // ,\"United Kingdom\"
     // , "England", "London", "Manchester", "Birmingham", "Liverpool", "Leeds", "Sheffield", "Bristol", "Newcastle",
@@ -148,20 +148,34 @@ const countriesToRemove = [
 ];
 
 let inMemoryLangCache = {};
+let hideViewedCache = false;
+let hideAppliedCache = false;
 
 // Load language cache from storage initially
-chrome.storage.local.get(['jobLanguageCache'], function (result) {
+chrome.storage.local.get(['jobLanguageCache', 'hideViewed', 'hideApplied'], function (result) {
     if (result.jobLanguageCache) {
         inMemoryLangCache = result.jobLanguageCache;
         if (typeof injectListLabels === 'function') injectListLabels();
     }
+    if (result.hideViewed !== undefined) hideViewedCache = result.hideViewed;
+    if (result.hideApplied !== undefined) hideAppliedCache = result.hideApplied;
 });
 
 // Listen for updates to cache
 chrome.storage.onChanged.addListener(function (changes, namespace) {
-    if (namespace === 'local' && changes.jobLanguageCache) {
-        inMemoryLangCache = changes.jobLanguageCache.newValue || {};
-        if (typeof injectListLabels === 'function') injectListLabels();
+    if (namespace === 'local') {
+        if (changes.jobLanguageCache) {
+            inMemoryLangCache = changes.jobLanguageCache.newValue || {};
+            if (typeof injectListLabels === 'function') injectListLabels();
+        }
+        if (changes.hideViewed) {
+            hideViewedCache = changes.hideViewed.newValue || false;
+            if (typeof hideJobs === 'function') hideJobs();
+        }
+        if (changes.hideApplied) {
+            hideAppliedCache = changes.hideApplied.newValue || false;
+            if (typeof hideJobs === 'function') hideJobs();
+        }
     }
 });
 
@@ -284,38 +298,36 @@ function hideJobs() {
     totalJobsCounter = jobItems.length;
     let currentHidden = 0;
 
-    // Read toggle settings from storage (cached, refreshed each call)
-    chrome.storage.local.get({ hideViewed: false, hideApplied: false }, function (settings) {
-        const hideViewed = settings.hideViewed;
-        const hideApplied = settings.hideApplied;
+    // Use toggle settings from in-memory cache
+    const hideViewed = hideViewedCache;
+    const hideApplied = hideAppliedCache;
 
-        jobItems.forEach(item => {
-            const itemText = item.textContent.toLowerCase();
-            let shouldHide = countriesLower.some(country => itemText.includes(country));
+    jobItems.forEach(item => {
+        const itemText = item.textContent.toLowerCase();
+        let shouldHide = countriesLower.some(country => itemText.includes(country));
 
-            // Check for "Viewed" / "Applied" footer labels
-            if (!shouldHide && (hideViewed || hideApplied)) {
-                const footerElem = item.querySelector('.job-card-container__footer-job-state');
-                if (footerElem) {
-                    const footerText = footerElem.textContent.trim().toLowerCase();
-                    if (hideViewed && footerText === 'viewed') shouldHide = true;
-                    if (hideApplied && footerText === 'applied') shouldHide = true;
-                }
+        // Check for "Viewed" / "Applied" footer labels
+        if (!shouldHide && (hideViewed || hideApplied)) {
+            const footerElem = item.querySelector('.job-card-container__footer-job-state');
+            if (footerElem) {
+                const footerText = footerElem.textContent.trim().toLowerCase();
+                if (hideViewed && footerText === 'viewed') shouldHide = true;
+                if (hideApplied && footerText === 'applied') shouldHide = true;
             }
+        }
 
-            if (shouldHide) {
-                item.style.setProperty('display', 'none', 'important');
-                item.dataset.jobHidden = "true";
-                currentHidden++;
-            } else {
-                item.style.removeProperty('display');
-                item.dataset.jobHidden = "false";
-            }
-        });
-
-        hiddenJobsCounter = currentHidden;
-        updateBadge();
+        if (shouldHide) {
+            item.style.setProperty('display', 'none', 'important');
+            item.dataset.jobHidden = "true";
+            currentHidden++;
+        } else {
+            item.style.removeProperty('display');
+            item.dataset.jobHidden = "false";
+        }
     });
+
+    hiddenJobsCounter = currentHidden;
+    updateBadge();
 }
 
 function saveCurrentJob() {
