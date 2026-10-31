@@ -137,14 +137,14 @@ const countriesToRemove = [
     "Community of Madrid", "Comunidad de Madrid", "Comunitat Valenciana", "Castilla y Leon", "Castilla-La Mancha",
     "Aragon", "Canary Islands", "Balearic Islands", "Extremadura", "Asturias", "Navarra", "Cantabria", "La Rioja", "Gibraltar"
 
-    // // ,\"United Kingdom\"
-    // , "England", "London", "Manchester", "Birmingham", "Liverpool", "Leeds", "Sheffield", "Bristol", "Newcastle",
-    // "Nottingham", "Leicester", "Coventry", "Bradford", "Cardiff", "Belfast", "Edinburgh", "Glasgow", "Aberdeen",
-    // "Southampton", "Portsmouth", "Plymouth", "Reading", "Milton Keynes", "Northampton", "Swindon", "Bournemouth",
-    // "Cambridge", "Oxford", "York", "Derby", "Stoke-on-Trent", "Wolverhampton", "Middlesbrough",
-    // "Greater London", "Greater Manchester", "West Midlands", "South East England", "South West England",
-    // "East Midlands", "West Yorkshire", "North West England", "East of England", "Scotland", "Wales",
-    // "Northern Ireland"
+    , "United Kingdom"
+    , "England", "London", "Manchester", "Birmingham", "Liverpool", "Leeds", "Sheffield", "Bristol", "Newcastle",
+    "Nottingham", "Leicester", "Coventry", "Bradford", "Cardiff", "Belfast", "Edinburgh", "Glasgow", "Aberdeen",
+    "Southampton", "Portsmouth", "Plymouth", "Reading", "Milton Keynes", "Northampton", "Swindon", "Bournemouth",
+    "Cambridge", "Oxford", "York", "Derby", "Stoke-on-Trent", "Wolverhampton", "Middlesbrough",
+    "Greater London", "Greater Manchester", "West Midlands", "South East England", "South West England",
+    "East Midlands", "West Yorkshire", "North West England", "East of England", "Scotland", "Wales",
+    "Northern Ireland"
 ];
 
 let inMemoryLangCache = {};
