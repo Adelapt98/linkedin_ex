@@ -1,8 +1,6 @@
 .DS_Store
 examples/
 node_modules/
-package-lock.json
-package.json
 
 # Test scripts
 test_parse.js
@@ -10,3 +8,13 @@ run_tests.js
 
 # Data exports
 *.csv
+
+# Secrets — never commit these
+.env
+.env.local
+credentials.json
+token.json
+service-account*.json
+*.pem
+*.key
+id_rsa*
