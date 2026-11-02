@@ -1,0 +1,21 @@
+{
+  "3861713966": {
+    "companyName": "Example Company",
+    "isEnglish": true,
+    "link": "https://www.linkedin.com/jobs/view/3861713966/",
+    "location": "Berlin, Germany",
+    "postedTs": 1700000000000,
+    "postedLabel": "Posted",
+    "reqLang": false,
+    "noSponsorship": false,
+    "saved": true,
+    "title": "Senior Software Engineer",
+    "recruiter": "Jane Doe",
+    "recruiterLink": "https://www.linkedin.com/in/janedoe/",
+    "email": "jane@example.com",
+    "description": "Replace this with the real job description exported from the browser extension.",
+    "dateSaved": "2026-01-01T00:00:00.000Z",
+    "status": "",
+    "emailsFound": 0
+  }
+}

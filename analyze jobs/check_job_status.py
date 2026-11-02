@@ -142,10 +142,10 @@ def main():
         
     # Note: genai.Client is instantiated directly when calling the API
     
-    # Load JSON data
-    json_path = 'linkedin_job_data.json.json'
+    # Load JSON data (export this file from the browser extension; see README.md)
+    json_path = 'linkedin_job_data.json'
     if not os.path.exists(json_path):
-        print(f"Error: {json_path} not found.")
+        print(f"Error: {json_path} not found. Export it from the browser extension first.")
         return
         
     print(f"Loading job data from {json_path}...")

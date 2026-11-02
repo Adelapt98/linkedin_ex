@@ -8,8 +8,8 @@ with open('job_application_status_backup.csv', 'r', encoding='utf-8') as f:
     for row in reader:
         csv_jobs.add(f"{row['Company']}||{row['Job Title']}")
 
-# Load JSON
-with open('linkedin_job_data.json.json', 'r', encoding='utf-8') as f:
+# Load JSON (export this file from the browser extension; see README.md)
+with open('linkedin_job_data.json', 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 # Time 10 days ago

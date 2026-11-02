@@ -3,11 +3,6 @@
   "name": "APT LinkedIn Job Search",
   "version": "1.0",
   "description": "Hides specific jobs on LinkedIn job search page based on keywords.",
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
   "permissions": [
     "storage",
     "downloads",
@@ -15,17 +10,18 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["dashboard.html", "dashboard.js", "ai_search_page.js", "icons/*"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "dashboard.html",
+        "dashboard.js",
+        "ai_search_page.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {
