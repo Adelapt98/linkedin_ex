@@ -1,6 +1,10 @@
 .DS_Store
 examples/
 node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
 
 # Test scripts
 test_parse.js
